@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>せどりAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d14;
+  --card: #17171f;
+  --card2: #1e1e28;
+  --accent: #ff6b35;
+  --gold: #ffc844;
+  --green: #00d68f;
+  --blue: #4d9fff;
+  --text: #f2f2f8;
+  --muted: #7a7a9a;
+  --border: #2a2a3c;
+  --radius: 16px;
+  --safe-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(13,13,20,0.95);
+  backdrop-filter: blur(16px);
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-icon {
+  width: 36px; height: 36px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.header h1 { font-size: 16px; font-weight: 900; }
+.header-badge {
+  margin-left: auto;
+  background: rgba(255,107,53,0.15);
+  border: 1px solid rgba(255,107,53,0.4);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+/* ── PROGRESS DOTS ── */
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 16px 0;
+}
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s;
+}
+.dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+.dot.done { background: var(--green); }
+
+/* ── PAGES ── */
+.page { display: none; padding: 16px 16px 100px; }
+.page.active { display: block; }
+
+/* ── SECTION LABEL ── */
+.sec-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  margin-top: 20px;
+  padding-left: 2px;
+}
+.sec-label:first-child { margin-top: 4px; }
+
+/* ── UPLOAD ── */
+.upload-box {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 32px 16px;
+  text-align: center;
+  position: relative;
+  transition: all 0.2s;
+  background: var(--card);
+}
+.upload-box.has-files { border-color: var(--accent); border-style: solid; }
+.upload-box input { position:absolute; inset:0; opacity:0; width:100%; height:100%; }
+.upload-emoji { font-size: 36px; margin-bottom: 8px; }
+.upload-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.upload-sub { font-size: 12px; color: var(--muted); }
+
+.thumb-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.thumb {
+  flex-shrink: 0;
+  width: 64px; height: 64px;
+  border-radius: 10px;
+  background: var(--card2);
+  overflow: hidden;
+  position: relative;
+}
+.thumb img { width:100%; height:100%; object-fit:cover; }
+.thumb .del {
+  position:absolute; top:2px; right:2px;
+  background: rgba(0,0,0,0.75);
+  border: none; color: #fff;
+  border-radius: 50%; width:18px; height:18px;
+  font-size:10px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.thumb-video {
+  display:flex; align-items:center; justify-content:center;
+  font-size: 24px;
+}
+
+/* ── INPUTS ── */
+.input-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.input-row {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  gap: 6px;
+}
+.input-row:last-child { border-bottom: none; }
+.input-row label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.input-row input,
+.input-row select,
+.input-row textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  text-align: left;
+  padding: 4px 0 6px;
+  outline: none;
+  -webkit-appearance: none;
+  width: 100%;
+}
+.input-row textarea {
+  resize: none;
+  min-height: 64px;
+  line-height: 1.6;
+}
+.input-row select option { background: #1e1e28; }
+
+/* ── NOTE TOGGLE ── */
+.toggle-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 13px; font-weight: 700; }
+.toggle-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.toggle {
+  position: relative;
+  width: 44px; height: 26px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--border);
+  border-radius: 13px;
+  transition: 0.2s;
+  cursor: pointer;
+}
+.toggle-slider:before {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  left: 3px; top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+/* ── OUTPUT TYPE CHIPS ── */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 100px;
+  border: 1.5px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--card);
+  user-select: none;
+}
+.chip.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255,107,53,0.1);
+}
+.chip .chip-icon { font-size: 16px; }
+
+/* ── BIG BUTTON ── */
+.btn-main {
+  position: fixed;
+  bottom: calc(16px + var(--safe-bottom));
+  left: 16px; right: 16px;
+  z-index: 40;
+  padding: 18px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 100px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 32px rgba(255,107,53,0.4);
+  transition: all 0.15s;
+}
+.btn-main:active { transform: scale(0.97); }
+.btn-main:disabled { opacity: 0.4; box-shadow: none; }
+.btn-secondary {
+  width: 100%;
+  padding: 14px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  border-radius: 100px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 8px;
+}
+.btn-secondary:active { background: var(--card2); }
+
+/* ── LOADING ── */
+.loading {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(13,13,20,0.92);
+  backdrop-filter: blur(12px);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+.loading.show { display: flex; }
+.spinner {
+  width: 52px; height: 52px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-title { font-size: 18px; font-weight: 900; color: var(--accent); }
+.loading-sub { font-size: 13px; color: var(--muted); text-align: center; max-width: 240px; }
+
+/* ── RESULT PAGE ── */
+.profit-bar {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.profit-num {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--green);
+}
+.profit-detail { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.roi-badge {
+  margin-left: auto;
+  background: rgba(0,214,143,0.15);
+  border: 1px solid rgba(0,214,143,0.3);
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 900;
+  padding: 6px 12px;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+
+/* ── OUTPUT TABS (scroll) ── */
+.tab-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  scrollbar-width: none;
+}
+.tab-scroll::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1.5px solid var(--border);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--card);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tab-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* ── RESULT BLOCKS ── */
+.pane { display: none; }
+.pane.active { display: block; }
+
+.result-block {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.result-block-head {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.result-block-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.copy-pill {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 100px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.copy-pill.copied { background: rgba(0,214,143,0.15); border-color: var(--green); color: var(--green); }
+.result-block-body {
+  padding: 14px;
+  font-size: 14px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.result-block-body.large { font-size: 18px; font-weight: 900; line-height: 1.3; }
+.result-block-body.accent { color: var(--accent); }
+.result-block-body.gold { color: var(--gold); font-weight: 700; }
+
+.tag-wrap {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag {
+  background: rgba(255,200,68,0.1);
+  border: 1px solid rgba(255,200,68,0.25);
+  color: var(--gold);
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tag:active { background: rgba(255,200,68,0.2); }
+
+/* timeline */
+.tl-item {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.tl-item:last-child { border-bottom: none; }
+.tl-time {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 52px;
+  margin-top: 2px;
+}
+.tl-text { font-size: 14px; font-weight: 700; flex: 1; }
+.tl-style { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.tl-copy {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* canva preview */
+.canva-preview {
+  margin: 14px;
+  border-radius: 12px;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  position: relative;
+  background: #111;
+}
+.canva-main { font-size: 24px; font-weight: 900; color: white; text-align: center; }
+.canva-sub { font-size: 14px; color: #aaa; text-align: center; }
+.canva-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* note lock */
+.note-lock {
+  background: rgba(255,200,68,0.08);
+  border: 1px dashed rgba(255,200,68,0.3);
+  border-radius: 10px;
+  margin: 10px;
+  padding: 12px;
+}
+.note-lock-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+/* reset btn */
+.reset-area {
+  padding: 20px 0 8px;
+  text-align: center;
+}
+.reset-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  border-radius: 100px;
+  padding: 10px 24px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-icon">🏷️</div>
+  <h1>せどりAI</h1>
+  <div class="header-badge">AUTO</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress">
+  <div class="dot active" id="dot0"></div>
+  <div class="dot" id="dot1"></div>
+  <div class="dot" id="dot2"></div>
+  <div class="dot" id="dot3"></div>
+</div>
+
+<!-- ══ PAGE 0: 商品情報 ══ -->
+<div class="page active" id="page0">
+
+  <div class="sec-label">📸 写真・動画</div>
+  <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none">
+  <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-emoji">📁</div>
+    <div class="upload-title">タップして選択</div>
+    <div class="upload-sub">写真・動画 複数OK</div>
+  </div>
+  <div class="thumb-row" id="thumbRow"></div>
+
+  <div class="sec-label">💰 商品情報</div>
+  <div class="input-card">
+    <div class="input-row">
+      <label>商品名</label>
+      <input type="text" id="productName" placeholder="例：レゴ 10302">
+    </div>
+    <div class="input-row">
+      <label>カテゴリー</label>
+      <select id="category">
+        <option>おもちゃ・ゲーム</option>
+        <option>家電・スマホ</option>
+        <option>ブランド品</option>
+        <option>本・CD・DVD</option>
+        <option>スポーツ用品</option>
+        <option>食品・飲料</option>
+        <option>その他</option>
+      </select>
+    </div>
+    <div class="input-row">
+      <label>仕入れ値</label>
+      <input type="number" id="buyPrice" placeholder="2800" inputmode="numeric">
+    </div>
+    <div class="input-row">
+      <label>売値</label>
+      <input type="number" id="sellPrice" placeholder="6500" inputmode="numeric">
+    </div>
+    <div class="input-row">
+      <label>仕入れ先</label>
+      <input type="text" id="location" placeholder="ドンキ・非公開 など">
+    </div>
+    <div class="input-row">
+      <label>メモ</label>
+      <textarea id="comment" placeholder="状態・失敗談・ポイントなど"></textarea>
+    </div>
+  </div>
+
+  <div class="sec-label">📝 noteに載せる範囲</div>
+  <div class="toggle-card">
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">商品名をnoteに載せる</div>
+        <div class="toggle-sub">無料部分にも表示される</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="showName" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">仕入れ値・売値を載せる</div>
+        <div class="toggle-sub">有料部分のみに載せる</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="showPrice" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">仕入れ先を載せる</div>
+        <div class="toggle-sub">有料部分のみ・伏せもOK</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="showLocation"><span class="toggle-slider"></span></label>
+    </div>
+  </div>
+
+  <div class="sec-label">📲 生成するコンテンツ</div>
+  <div class="chips">
+    <div class="chip on" data-type="tiktok"><span class="chip-icon">🎵</span>TikTok</div>
+    <div class="chip on" data-type="tiktok_studio"><span class="chip-icon">🎬</span>TikTok Studio字幕</div>
+    <div class="chip on" data-type="instagram"><span class="chip-icon">📷</span>Instagram</div>
+    <div class="chip on" data-type="canva"><span class="chip-icon">🎨</span>Canvaサムネ</div>
+    <div class="chip on" data-type="note"><span class="chip-icon">📝</span>有料note</div>
+  </div>
+
+  <div id="errorMsg" style="display:none;margin-top:16px;background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.3);border-radius:12px;padding:14px;font-size:13px;line-height:1.7;color:#ff6060;white-space:pre-wrap;word-break:break-all;"></div>
+
+</div>
+
+<!-- ══ PAGE 3: 結果 ══ -->
+<div class="page" id="page3">
+  <div id="profitBar" class="profit-bar"></div>
+
+  <div class="sec-label" style="margin-top:16px;">コンテンツを選んでコピー</div>
+  <div class="tab-scroll" id="tabScroll"></div>
+  <div id="panes"></div>
+
+  <div class="reset-area">
+    <button class="reset-btn" onclick="reset()">🔄 新しい商品を入力する</button>
+  </div>
+</div>
+
+<!-- BIG BUTTON -->
+<button class="btn-main" id="mainBtn" onclick="handleMain()">
+  ⚡ AIでコンテンツを生成
+</button>
+
+<!-- LOADING -->
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-title">AI生成中…</div>
+  <div class="loading-sub" id="loadingSub">商品情報を分析しています</div>
+</div>
+
+<script>
+// ── state ──
+let files = [];
+let currentPage = 0;
+let result = null;
+
+// ── chips ──
+document.querySelectorAll('.chip').forEach(c => {
+  c.addEventListener('click', () => c.classList.toggle('on'));
+});
+
+// ── file upload ──
+const fileInput = document.getElementById('fileInput');
+fileInput.addEventListener('change', e => { [...e.target.files].forEach(addFile); fileInput.value=''; });
+
+function addFile(f) {
+  files.push(f);
+  const div = document.createElement('div');
+  div.className = 'thumb';
+
+  if (f.type.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    div.appendChild(img);
+  } else if (f.type.startsWith('video/')) {
+    // サムネイル：videoタグで1フレームをcanvasに描画
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(f);
+    video.muted = true;
+    video.playsInline = true;
+    video.currentTime = 0.5;
+    const canvas = document.createElement('canvas');
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.objectFit = 'cover';
+    canvas.style.position = 'absolute';
+    canvas.style.inset = '0';
+    div.style.position = 'relative';
+    div.appendChild(canvas);
+
+    // 再生マークオーバーレイ
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;';
+    overlay.textContent = '▶️';
+    div.appendChild(overlay);
+
+    video.addEventListener('seeked', () => {
+      canvas.width = video.videoWidth || 64;
+      canvas.height = video.videoHeight || 64;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    });
+    video.load();
+  } else {
+    div.classList.add('thumb-video');
+    div.textContent = '🎬';
+  }
+
+  const del = document.createElement('button');
+  del.className = 'del'; del.textContent = '✕';
+  del.onclick = (e) => { e.stopPropagation(); files = files.filter(x => x !== f); div.remove(); updateUploadBox(); };
+  div.appendChild(del);
+  document.getElementById('thumbRow').appendChild(div);
+  updateUploadBox();
+}
+
+function updateUploadBox() {
+  document.getElementById('uploadBox').classList.toggle('has-files', files.length > 0);
+}
+
+// ── main button ──
+async function handleMain() {
+  if (currentPage === 0) await generate();
+}
+
+// ── generate ──
+async function generate() {
+  const name = document.getElementById('productName').value.trim();
+  const buy = document.getElementById('buyPrice').value;
+  const sell = document.getElementById('sellPrice').value;
+  const cat = document.getElementById('category').value;
+  const loc = document.getElementById('location').value.trim();
+  const memo = document.getElementById('comment').value.trim();
+  const showName = document.getElementById('showName').checked;
+  const showPrice = document.getElementById('showPrice').checked;
+  const showLocation = document.getElementById('showLocation').checked;
+
+  if (!name || !buy || !sell) { alert('商品名・仕入れ値・売値を入力してください'); return; }
+
+  const types = [...document.querySelectorAll('.chip.on')].map(c => c.dataset.type);
+  if (!types.length) { alert('コンテンツを1つ以上選択してください'); return; }
+
+  const profit = parseInt(sell) - parseInt(buy);
+  const roi = Math.round(profit / parseInt(buy) * 100);
+
+  // loading
+  document.getElementById('errorMsg').style.display = 'none';
+  showLoading(true);
+  const msgs = ['商品情報を分析中…','TikTok字幕を生成中…','Instagram文を作成中…','Canvaサムネを構成中…','note記事を執筆中…','ハッシュタグ選定中…','仕上げ中…'];
+  let mi = 0;
+  const iv = setInterval(() => { document.getElementById('loadingSub').textContent = msgs[mi++ % msgs.length]; }, 1200);
+
+  // note instruction based on toggles
+  const noteInstruction = `
+note記事での情報公開ルール：
+- 商品名：${showName ? '無料部分にも記載してOK' : '商品名は伏せて「ある玩具」など表現すること'}
+- 仕入れ値・売値：${showPrice ? '有料部分にのみ記載すること（無料部分には載せない）' : '価格情報は一切記載しないこと'}
+- 仕入れ先：${showLocation && loc ? `有料部分に「${loc}」を記載してOK` : '仕入れ先は伏せて「某リサイクルショップ」など表現すること'}
+`;
+
+  const prompt = `あなたはせどり・転売ビジネスのSNSコンテンツ専門家です。
+
+【商品情報】
+商品名: ${name}
+カテゴリー: ${cat}
+仕入れ価格: ${parseInt(buy).toLocaleString()}円
+売値: ${parseInt(sell).toLocaleString()}円
+利益: ${profit.toLocaleString()}円（ROI ${roi}%）
+仕入れ場所: ${loc || '非公開'}
+メモ: ${memo || 'なし'}
+
+${noteInstruction}
+
+以下のJSONのみ出力（説明文・コードブロック記号は不要）:
+{
+  "tiktok":{
+    "hook":"最初の3秒キャッチコピー（20字以内）",
+    "title":"動画タイトル（30字以内）",
+    "caption":"キャプション（150字以内・絵文字多め）",
+    "subtitles":["テロップ1","テロップ2","テロップ3","テロップ4","テロップ5"],
+    "hashtags":["タグ1","タグ2","タグ3","タグ4","タグ5","タグ6","タグ7","タグ8"]
+  },
+  "tiktok_studio":{
+    "captions":[
+      {"text":"字幕1","start":"0:00","end":"0:04","style":"スタイル提案"},
+      {"text":"字幕2","start":"0:04","end":"0:08","style":"スタイル提案"},
+      {"text":"字幕3","start":"0:08","end":"0:13","style":"スタイル提案"},
+      {"text":"字幕4","start":"0:13","end":"0:18","style":"スタイル提案"},
+      {"text":"字幕5","start":"0:18","end":"0:23","style":"スタイル提案"},
+      {"text":"字幕6","start":"0:23","end":"0:28","style":"スタイル提案"},
+      {"text":"字幕7","start":"0:28","end":"0:30","style":"CTAスタイル"}
+    ],
+    "bgm_mood":"おすすめBGM雰囲気",
+    "edit_tips":"編集ポイント（箇条書き2〜3点）"
+  },
+  "instagram":{
+    "post_text":"投稿文（300字以内・改行あり・絵文字あり）",
+    "story_text":"ストーリーズテキスト（50字以内）",
+    "hashtags":["タグ1","タグ2","タグ3","タグ4","タグ5","タグ6","タグ7","タグ8","タグ9","タグ10"]
+  },
+  "canva":{
+    "main":"メインテキスト（20字以内・インパクト重視）",
+    "sub":"サブテキスト（30字以内）",
+    "price_badge":"価格バッジ（例：2,800円→6,500円）",
+    "color":"カラーテーマ（例：黒×オレンジ×白）",
+    "layout_tip":"Canva配置アドバイス（1〜2文）",
+    "story_overlay":"ストーリーズオーバーレイテキスト（20字以内）"
+  },
+  "note":{
+    "title":"記事タイトル（読みたくなるもの）",
+    "free_lead":"無料リード文（200字・続きを読みたくなる終わり方）",
+    "paid_body":"有料本文（目利きポイント・仕入れコツ・注意点など600字程度）",
+    "cta":"有料購読誘導文（50字以内）"
+  }
+}
+
+日本語・せどり初〜中級者向け・リアルで共感しやすいトーンで。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(`APIエラー ${res.status}: ${JSON.stringify(data)}`);
+    }
+
+    const raw = data.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
+
+    let result;
+    try {
+      result = JSON.parse(raw);
+    } catch(pe) {
+      throw new Error('JSON解析エラー。AIの返答:\n' + raw.slice(0, 300));
+    }
+
+    clearInterval(iv);
+    showLoading(false);
+
+    renderResult(result, types, profit, roi, parseInt(buy), parseInt(sell));
+    goPage(3);
+
+  } catch(e) {
+    clearInterval(iv);
+    showLoading(false);
+    // エラーをページ上に表示
+    const errDiv = document.getElementById('errorMsg');
+    errDiv.textContent = '⚠️ ' + e.message;
+    errDiv.style.display = 'block';
+    console.error(e);
+  }
+}
+
+// ── render result ──
+function renderResult(r, types, profit, roi, buy, sell) {
+  // profit bar
+  document.getElementById('profitBar').innerHTML = `
+    <div>
+      <div class="profit-num">+¥${profit.toLocaleString()}</div>
+      <div class="profit-detail">仕入れ ¥${buy.toLocaleString()} → 売値 ¥${sell.toLocaleString()}</div>
+    </div>
+    <div class="roi-badge">ROI ${roi}%</div>
+  `;
+
+  const tabScroll = document.getElementById('tabScroll');
+  const panesEl = document.getElementById('panes');
+  tabScroll.innerHTML = ''; panesEl.innerHTML = '';
+
+  const labels = {
+    tiktok: '🎵 TikTok',
+    tiktok_studio: '🎬 Studio字幕',
+    instagram: '📷 Instagram',
+    canva: '🎨 Canvaサムネ',
+    note: '📝 note記事'
+  };
+
+  types.forEach((type, i) => {
+    // tab
+    const tab = document.createElement('button');
+    tab.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    tab.textContent = labels[type] || type;
+    tab.onclick = () => {
+      document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('pane-' + type).classList.add('active');
+    };
+    tabScroll.appendChild(tab);
+
+    // pane
+    const pane = document.createElement('div');
+    pane.className = 'pane' + (i === 0 ? ' active' : '');
+    pane.id = 'pane-' + type;
+
+    if (type === 'tiktok' && r.tiktok) {
+      const t = r.tiktok;
+      pane.innerHTML = `
+        ${block('🎣 最初の3秒フック', t.hook, 'large accent')}
+        ${block('📌 タイトル', t.title, '')}
+        ${block('💬 キャプション', t.caption, '')}
+        ${block('🎬 字幕テロップ', t.subtitles.map((s,i)=>`${i+1}. ${s}`).join('\n'), '')}
+        <div class="result-block">
+          <div class="result-block-head">
+            <span class="result-block-label">#️⃣ ハッシュタグ</span>
+            <button class="copy-pill" onclick="cp(this, '${esc(t.hashtags.map(h=>'#'+h).join(' '))}')">全コピー</button>
+          </div>
+          <div class="tag-wrap">${t.hashtags.map(h=>`<span class="tag" onclick="cp(this,'#${esc(h)}')">#${h}</span>`).join('')}</div>
+        </div>
+      `;
+    }
+
+    if (type === 'tiktok_studio' && r.tiktok_studio) {
+      const ts = r.tiktok_studio;
+      const rows = ts.captions.map(c => `
+        <div class="tl-item">
+          <div class="tl-time">${c.start}<br>${c.end}</div>
+          <div style="flex:1;">
+            <div class="tl-text">${c.text}</div>
+            <div class="tl-style">${c.style}</div>
+          </div>
+          <button class="tl-copy" onclick="cp(this,'${esc(c.text)}')">📋</button>
+        </div>
+      `).join('');
+      pane.innerHTML = `
+        <div class="result-block">
+          <div class="result-block-head">
+            <span class="result-block-label">🎬 字幕タイムライン</span>
+            <button class="copy-pill" onclick="cp(this,'${esc(ts.captions.map(c=>c.text).join('\n'))}')">全コピー</button>
+          </div>
+          ${rows}
+        </div>
+        ${block('🎵 BGMの雰囲気', ts.bgm_mood, '')}
+        ${block('💡 編集ポイント', ts.edit_tips, '')}
+      `;
+    }
+
+    if (type === 'instagram' && r.instagram) {
+      const ig = r.instagram;
+      pane.innerHTML = `
+        ${block('📸 投稿文', ig.post_text, '')}
+        ${block('📲 ストーリーズ', ig.story_text, 'large')}
+        <div class="result-block">
+          <div class="result-block-head">
+            <span class="result-block-label">#️⃣ ハッシュタグ</span>
+            <button class="copy-pill" onclick="cp(this,'${esc(ig.hashtags.map(h=>'#'+h).join(' '))}')">全コピー</button>
+          </div>
+          <div class="tag-wrap">${ig.hashtags.map(h=>`<span class="tag" onclick="cp(this,'#${esc(h)}')">#${h}</span>`).join('')}</div>
+        </div>
+      `;
+    }
+
+    if (type === 'canva' && r.canva) {
+      const cv = r.canva;
+      pane.innerHTML = `
+        <div class="result-block">
+          <div class="result-block-head"><span class="result-block-label">🖼️ プレビュー</span></div>
+          <div class="canva-preview">
+            <div class="canva-badge">${cv.price_badge}</div>
+            <div class="canva-main">${cv.main}</div>
+            <div class="canva-sub">${cv.sub}</div>
+          </div>
+        </div>
+        ${block('✏️ メインテキスト', cv.main, 'large')}
+        ${block('✏️ サブテキスト', cv.sub, '')}
+        ${block('💰 価格バッジ', cv.price_badge, 'gold')}
+        ${block('🎨 カラーテーマ', cv.color, '')}
+        ${block('📐 配置アドバイス', cv.layout_tip, '')}
+        ${block('📲 ストーリーズオーバーレイ', cv.story_overlay, 'large accent')}
+      `;
+    }
+
+    if (type === 'note' && r.note) {
+      const n = r.note;
+      pane.innerHTML = `
+        ${block('📰 記事タイトル', n.title, 'large')}
+        ${block('📖 無料部分（リード文）', n.free_lead, '')}
+        <div class="result-block">
+          <div class="result-block-head">
+            <span class="result-block-label">🔒 有料部分（本文）</span>
+            <button class="copy-pill" onclick="cp(this,'${esc(n.paid_body)}')">コピー</button>
+          </div>
+          <div class="note-lock">
+            <div class="note-lock-header">🔒 有料ゾーン</div>
+            <div style="font-size:13px;line-height:1.8;white-space:pre-wrap;">${n.paid_body}</div>
+          </div>
+        </div>
+        ${block('📣 購読誘導文', n.cta, 'gold')}
+      `;
+    }
+
+    panesEl.appendChild(pane);
+  });
+}
+
+function block(label, text, bodyClass) {
+  const id = 'b' + Math.random().toString(36).slice(2);
+  return `
+    <div class="result-block">
+      <div class="result-block-head">
+        <span class="result-block-label">${label}</span>
+        <button class="copy-pill" id="${id}" onclick="cp(this,'${esc(text)}')">コピー</button>
+      </div>
+      <div class="result-block-body ${bodyClass||''}">${text}</div>
+    </div>
+  `;
+}
+
+function esc(s) {
+  return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');
+}
+
+function cp(btn, text) {
+  const decoded = text.replace(/\\n/g,'\n').replace(/\\'/g,"'").replace(/\\\\/g,'\\');
+  navigator.clipboard.writeText(decoded).then(() => {
+    btn.textContent = '✓ コピー済み';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── page nav ──
+function goPage(n) {
+  document.querySelectorAll('.page').forEach((p,i) => p.classList.toggle('active', i === n || (n===3 && i===3)));
+  // fix: show page3 which is index 1 in DOM
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  if (n === 0) document.getElementById('page0').classList.add('active');
+  if (n === 3) document.getElementById('page3').classList.add('active');
+  currentPage = n;
+  updateDots();
+  updateBtn();
+  window.scrollTo(0, 0);
+}
+
+function updateDots() {
+  const pageIdx = currentPage === 3 ? 3 : currentPage;
+  [0,1,2,3].forEach(i => {
+    const d = document.getElementById('dot'+i);
+    d.classList.remove('active','done');
+    if (i < pageIdx) d.classList.add('done');
+    else if (i === pageIdx) d.classList.add('active');
+  });
+}
+
+function updateBtn() {
+  const btn = document.getElementById('mainBtn');
+  if (currentPage === 0) { btn.textContent = '⚡ AIでコンテンツを生成'; btn.style.display = 'flex'; }
+  else { btn.style.display = 'none'; }
+}
+
+function showLoading(show) {
+  document.getElementById('loading').classList.toggle('show', show);
+}
+
+function reset() {
+  files = []; result = null;
+  document.getElementById('thumbRow').innerHTML = '';
+  document.getElementById('productName').value = '';
+  document.getElementById('buyPrice').value = '';
+  document.getElementById('sellPrice').value = '';
+  document.getElementById('location').value = '';
+  document.getElementById('comment').value = '';
+  document.querySelectorAll('.chip').forEach(c => c.classList.add('on'));
+  updateUploadBox();
+  goPage(0);
+}
+</script>
+</body>
+</html>
