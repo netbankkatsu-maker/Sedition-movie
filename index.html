@@ -927,6 +927,7 @@ function saveApiKey() {
 }
 function updateApiKeyBadge() {
   const badge = document.getElementById('apiKeyBadge');
+  if (!badge) return;
   if (getApiKey()) {
     badge.textContent = '🔑 設定済み';
     badge.classList.remove('not-set');
