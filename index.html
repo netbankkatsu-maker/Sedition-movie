@@ -544,6 +544,150 @@ html, body {
   cursor: pointer;
 }
 
+/* ── PRODUCT TABS ── */
+.product-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.product-tab {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--card);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.product-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.product-tab.filled {
+  border-color: var(--green);
+  color: var(--green);
+}
+.product-tab.filled.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.add-product-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  background: var(--card);
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  margin-top: 12px;
+}
+.add-product-btn:active { background: var(--card2); }
+.remove-product-btn {
+  background: rgba(255,60,60,0.1);
+  border: 1px solid rgba(255,60,60,0.3);
+  color: #ff6060;
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* ── VIDEO GEN ── */
+.video-gen-area {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.video-gen-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 100px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.video-gen-btn:disabled { opacity: 0.4; }
+.video-preview {
+  margin-top: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.video-preview video {
+  width: 100%;
+  border-radius: 12px;
+}
+.video-download-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--green);
+  color: var(--bg);
+  border: none;
+  border-radius: 100px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* ── DISCLAIMER ── */
+.disclaimer {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(255,200,68,0.08);
+  border: 1px solid rgba(255,200,68,0.2);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--gold);
+  line-height: 1.6;
+}
+
+/* ── PROFIT SUMMARY (multi product) ── */
+.profit-summary {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.profit-summary-item {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.profit-summary-item:last-child { border-bottom: none; }
+.profit-summary-name { font-size: 13px; font-weight: 700; }
+.profit-summary-num { font-size: 15px; font-weight: 900; color: var(--green); }
+
 /* ── API KEY MODAL ── */
 .api-modal {
   position: fixed;
@@ -649,50 +793,10 @@ html, body {
 <!-- ══ PAGE 0: 商品情報 ══ -->
 <div class="page active" id="page0">
 
-  <div class="sec-label">📸 写真・動画</div>
-  <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none">
-  <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
-    <div class="upload-emoji">📁</div>
-    <div class="upload-title">タップして選択</div>
-    <div class="upload-sub">写真・動画 複数OK</div>
-  </div>
-  <div class="thumb-row" id="thumbRow"></div>
-
-  <div class="sec-label">💰 商品情報</div>
-  <div class="input-card">
-    <div class="input-row">
-      <label>商品名</label>
-      <input type="text" id="productName" placeholder="例：レゴ 10302">
-    </div>
-    <div class="input-row">
-      <label>カテゴリー</label>
-      <select id="category">
-        <option>おもちゃ・ゲーム</option>
-        <option>家電・スマホ</option>
-        <option>ブランド品</option>
-        <option>本・CD・DVD</option>
-        <option>スポーツ用品</option>
-        <option>食品・飲料</option>
-        <option>その他</option>
-      </select>
-    </div>
-    <div class="input-row">
-      <label>仕入れ値</label>
-      <input type="number" id="buyPrice" placeholder="2800" inputmode="numeric">
-    </div>
-    <div class="input-row">
-      <label>売値</label>
-      <input type="number" id="sellPrice" placeholder="6500" inputmode="numeric">
-    </div>
-    <div class="input-row">
-      <label>仕入れ先</label>
-      <input type="text" id="location" placeholder="ドンキ・非公開 など">
-    </div>
-    <div class="input-row">
-      <label>メモ</label>
-      <textarea id="comment" placeholder="状態・失敗談・ポイントなど"></textarea>
-    </div>
-  </div>
+  <div class="sec-label">📦 商品（最大3つまで）</div>
+  <div class="product-tabs" id="productTabs"></div>
+  <div id="productForms"></div>
+  <button class="add-product-btn" id="addProductBtn" onclick="addProduct()">＋ 商品を追加</button>
 
   <div class="sec-label">📝 noteに載せる範囲</div>
   <div class="toggle-card">
@@ -734,11 +838,13 @@ html, body {
 
 <!-- ══ PAGE 3: 結果 ══ -->
 <div class="page" id="page3">
-  <div id="profitBar" class="profit-bar"></div>
+  <div id="profitBar"></div>
 
   <div class="sec-label" style="margin-top:16px;">コンテンツを選んでコピー</div>
   <div class="tab-scroll" id="tabScroll"></div>
   <div id="panes"></div>
+
+  <div id="videoArea"></div>
 
   <div class="reset-area">
     <button class="reset-btn" onclick="reset()">🔄 新しい商品を入力する</button>
@@ -772,9 +878,10 @@ html, body {
 
 <script>
 // ── state ──
-let files = [];
 let currentPage = 0;
 let result = null;
+let products = []; // array of {files, name, category, buyPrice, sellPrice, location, comment}
+let activeProductIdx = 0;
 
 // ── API key management ──
 function getApiKey() {
@@ -802,71 +909,138 @@ function updateApiKeyBadge() {
     badge.classList.add('not-set');
   }
 }
-// init badge on load
 updateApiKeyBadge();
+
+// ── multi-product management ──
+function createProductData() {
+  return { files: [], name: '', category: 'おもちゃ・ゲーム', buyPrice: '', sellPrice: '', location: '', comment: '' };
+}
+
+function saveCurrentProduct() {
+  const form = document.getElementById('productForm-' + activeProductIdx);
+  if (!form) return;
+  const p = products[activeProductIdx];
+  p.name = form.querySelector('.p-name').value;
+  p.category = form.querySelector('.p-cat').value;
+  p.buyPrice = form.querySelector('.p-buy').value;
+  p.sellPrice = form.querySelector('.p-sell').value;
+  p.location = form.querySelector('.p-loc').value;
+  p.comment = form.querySelector('.p-memo').value;
+}
+
+function renderProductTabs() {
+  const tabsEl = document.getElementById('productTabs');
+  tabsEl.innerHTML = products.map((p, i) => {
+    const filled = p.name && p.buyPrice && p.sellPrice;
+    return `<button class="product-tab${i === activeProductIdx ? ' active' : ''}${filled ? ' filled' : ''}" onclick="switchProduct(${i})">📦 商品${i + 1}</button>`;
+  }).join('');
+  document.getElementById('addProductBtn').style.display = products.length >= 3 ? 'none' : 'flex';
+}
+
+function renderProductForm(idx) {
+  const p = products[idx];
+  const formsEl = document.getElementById('productForms');
+  formsEl.innerHTML = `
+    <div id="productForm-${idx}">
+      <div class="sec-label" style="margin-top:12px;">📸 写真・動画</div>
+      <input type="file" class="p-file-input" accept="image/*,video/*" multiple style="display:none">
+      <div class="upload-box" onclick="this.previousElementSibling.click()">
+        <div class="upload-emoji">📁</div>
+        <div class="upload-title">タップして選択</div>
+        <div class="upload-sub">写真・動画 複数OK</div>
+      </div>
+      <div class="thumb-row p-thumbs"></div>
+
+      <div class="sec-label">💰 商品情報</div>
+      <div class="input-card">
+        <div class="input-row"><label>商品名</label><input type="text" class="p-name" placeholder="例：レゴ 10302" value="${esc2(p.name)}"></div>
+        <div class="input-row"><label>カテゴリー</label>
+          <select class="p-cat">
+            ${['おもちゃ・ゲーム','家電・スマホ','ブランド品','本・CD・DVD','スポーツ用品','食品・飲料','その他'].map(c => `<option${c===p.category?' selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="input-row"><label>仕入れ値</label><input type="number" class="p-buy" placeholder="2800" inputmode="numeric" value="${p.buyPrice}"></div>
+        <div class="input-row"><label>売値</label><input type="number" class="p-sell" placeholder="6500" inputmode="numeric" value="${p.sellPrice}"></div>
+        <div class="input-row"><label>仕入れ先</label><input type="text" class="p-loc" placeholder="ドンキ・非公開 など" value="${esc2(p.location)}"></div>
+        <div class="input-row"><label>メモ</label><textarea class="p-memo" placeholder="状態・失敗談・ポイントなど">${esc2(p.comment)}</textarea></div>
+      </div>
+      ${products.length > 1 ? `<button class="remove-product-btn" onclick="removeProduct(${idx})">✕ この商品を削除</button>` : ''}
+    </div>
+  `;
+
+  // file input
+  const fileInput = formsEl.querySelector('.p-file-input');
+  fileInput.addEventListener('change', e => { [...e.target.files].forEach(f => addFileToProduct(idx, f)); fileInput.value=''; });
+
+  // render existing thumbs
+  renderThumbs(idx);
+}
+
+function esc2(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function addFileToProduct(idx, f) {
+  products[idx].files.push(f);
+  if (idx === activeProductIdx) renderThumbs(idx);
+}
+
+function renderThumbs(idx) {
+  const thumbRow = document.querySelector('.p-thumbs');
+  if (!thumbRow) return;
+  thumbRow.innerHTML = '';
+  const uploadBox = document.querySelector('.upload-box');
+  uploadBox.classList.toggle('has-files', products[idx].files.length > 0);
+
+  products[idx].files.forEach((f, fi) => {
+    const div = document.createElement('div');
+    div.className = 'thumb';
+    if (f.type.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      div.appendChild(img);
+    } else {
+      div.classList.add('thumb-video');
+      div.textContent = '🎬';
+    }
+    const del = document.createElement('button');
+    del.className = 'del'; del.textContent = '✕';
+    del.onclick = (e) => { e.stopPropagation(); products[idx].files.splice(fi, 1); renderThumbs(idx); };
+    div.appendChild(del);
+    thumbRow.appendChild(div);
+  });
+}
+
+function switchProduct(idx) {
+  saveCurrentProduct();
+  activeProductIdx = idx;
+  renderProductTabs();
+  renderProductForm(idx);
+}
+
+function addProduct() {
+  if (products.length >= 3) return;
+  saveCurrentProduct();
+  products.push(createProductData());
+  activeProductIdx = products.length - 1;
+  renderProductTabs();
+  renderProductForm(activeProductIdx);
+}
+
+function removeProduct(idx) {
+  products.splice(idx, 1);
+  if (activeProductIdx >= products.length) activeProductIdx = products.length - 1;
+  renderProductTabs();
+  renderProductForm(activeProductIdx);
+}
+
+// init first product
+products.push(createProductData());
+renderProductTabs();
+renderProductForm(0);
 
 // ── chips ──
 document.querySelectorAll('.chip').forEach(c => {
   c.addEventListener('click', () => c.classList.toggle('on'));
 });
-
-// ── file upload ──
-const fileInput = document.getElementById('fileInput');
-fileInput.addEventListener('change', e => { [...e.target.files].forEach(addFile); fileInput.value=''; });
-
-function addFile(f) {
-  files.push(f);
-  const div = document.createElement('div');
-  div.className = 'thumb';
-
-  if (f.type.startsWith('image/')) {
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(f);
-    div.appendChild(img);
-  } else if (f.type.startsWith('video/')) {
-    // サムネイル：videoタグで1フレームをcanvasに描画
-    const video = document.createElement('video');
-    video.src = URL.createObjectURL(f);
-    video.muted = true;
-    video.playsInline = true;
-    video.currentTime = 0.5;
-    const canvas = document.createElement('canvas');
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.objectFit = 'cover';
-    canvas.style.position = 'absolute';
-    canvas.style.inset = '0';
-    div.style.position = 'relative';
-    div.appendChild(canvas);
-
-    // 再生マークオーバーレイ
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;';
-    overlay.textContent = '▶️';
-    div.appendChild(overlay);
-
-    video.addEventListener('seeked', () => {
-      canvas.width = video.videoWidth || 64;
-      canvas.height = video.videoHeight || 64;
-      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    });
-    video.load();
-  } else {
-    div.classList.add('thumb-video');
-    div.textContent = '🎬';
-  }
-
-  const del = document.createElement('button');
-  del.className = 'del'; del.textContent = '✕';
-  del.onclick = (e) => { e.stopPropagation(); files = files.filter(x => x !== f); div.remove(); updateUploadBox(); };
-  div.appendChild(del);
-  document.getElementById('thumbRow').appendChild(div);
-  updateUploadBox();
-}
-
-function updateUploadBox() {
-  document.getElementById('uploadBox').classList.toggle('has-files', files.length > 0);
-}
 
 // ── main button ──
 async function handleMain() {
@@ -875,58 +1049,57 @@ async function handleMain() {
 
 // ── generate ──
 async function generate() {
-  const name = document.getElementById('productName').value.trim();
-  const buy = document.getElementById('buyPrice').value;
-  const sell = document.getElementById('sellPrice').value;
-  const cat = document.getElementById('category').value;
-  const loc = document.getElementById('location').value.trim();
-  const memo = document.getElementById('comment').value.trim();
-  const showName = document.getElementById('showName').checked;
-  const showPrice = document.getElementById('showPrice').checked;
-  const showLocation = document.getElementById('showLocation').checked;
+  saveCurrentProduct();
 
-  if (!name || !buy || !sell) { alert('商品名・仕入れ値・売値を入力してください'); return; }
+  // validate all products
+  const validProducts = products.filter(p => p.name && p.buyPrice && p.sellPrice);
+  if (!validProducts.length) { alert('商品名・仕入れ値・売値を入力してください'); return; }
 
   const types = [...document.querySelectorAll('.chip.on')].map(c => c.dataset.type);
   if (!types.length) { alert('コンテンツを1つ以上選択してください'); return; }
 
-  // Vercelデプロイでなければローカルキーが必要
   const isDeployed = !(location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:');
-  if (!isDeployed && !getApiKey()) {
-    showApiModal();
-    return;
-  }
+  if (!isDeployed && !getApiKey()) { showApiModal(); return; }
 
-  const profit = parseInt(sell) - parseInt(buy);
-  const roi = Math.round(profit / parseInt(buy) * 100);
+  const showName = document.getElementById('showName').checked;
+  const showPrice = document.getElementById('showPrice').checked;
+  const showLocation = document.getElementById('showLocation').checked;
 
-  // loading
-  document.getElementById('errorMsg').style.display = 'none';
-  showLoading(true);
-  const msgs = ['商品情報を分析中…','TikTok字幕を生成中…','Instagram文を作成中…','Canvaサムネを構成中…','note記事を執筆中…','ハッシュタグ選定中…','仕上げ中…'];
-  let mi = 0;
-  const iv = setInterval(() => { document.getElementById('loadingSub').textContent = msgs[mi++ % msgs.length]; }, 1200);
+  // build product info text
+  const productInfoText = validProducts.map((p, i) => {
+    const profit = parseInt(p.sellPrice) - parseInt(p.buyPrice);
+    const roi = Math.round(profit / parseInt(p.buyPrice) * 100);
+    return `【商品${i+1}】
+商品名: ${p.name}
+カテゴリー: ${p.category}
+仕入れ価格: ${parseInt(p.buyPrice).toLocaleString()}円
+売値: ${parseInt(p.sellPrice).toLocaleString()}円
+利益: ${profit.toLocaleString()}円（ROI ${roi}%）
+仕入れ場所: ${p.location || '非公開'}
+メモ: ${p.comment || 'なし'}`;
+  }).join('\n\n');
 
-  // note instruction based on toggles
   const noteInstruction = `
 note記事での情報公開ルール：
-- 商品名：${showName ? '無料部分にも記載してOK' : '商品名は伏せて「ある玩具」など表現すること'}
+- 商品名：${showName ? '無料部分にも記載してOK' : '商品名は伏せて「ある商品」など表現すること'}
 - 仕入れ値・売値：${showPrice ? '有料部分にのみ記載すること（無料部分には載せない）' : '価格情報は一切記載しないこと'}
-- 仕入れ先：${showLocation && loc ? `有料部分に「${loc}」を記載してOK` : '仕入れ先は伏せて「某リサイクルショップ」など表現すること'}
+- 仕入れ先：${showLocation ? '有料部分に記載してOK' : '仕入れ先は伏せて「某店舗」など表現すること'}
+
+note記事のトーン：
+- 「これから利益が出そうな注目商品」「今が狙い目」というリサーチ・予測系のトーンで書くこと
+- 「〜が値上がり傾向」「相場が動き始めている」「今のうちにチェック」といった表現を使う
+- 記事の最後に必ず「※掲載情報は執筆時点のものです。仕入れ・販売はすべて自己責任でお願いします。」の免責文を付ける
 `;
+
+  const multiProductNote = validProducts.length > 1
+    ? `\n※今回は${validProducts.length}つの商品をまとめて紹介する形式で書くこと。TikTok/Instagram/Canvaは最もインパクトのある商品1つにフォーカスし、noteは全商品をカバーすること。`
+    : '';
 
   const prompt = `あなたはせどり・転売ビジネスのSNSコンテンツ専門家です。
 
-【商品情報】
-商品名: ${name}
-カテゴリー: ${cat}
-仕入れ価格: ${parseInt(buy).toLocaleString()}円
-売値: ${parseInt(sell).toLocaleString()}円
-利益: ${profit.toLocaleString()}円（ROI ${roi}%）
-仕入れ場所: ${loc || '非公開'}
-メモ: ${memo || 'なし'}
+${productInfoText}
 
-${noteInstruction}
+${noteInstruction}${multiProductNote}
 
 以下のJSONのみ出力（説明文・コードブロック記号は不要）:
 {
@@ -966,12 +1139,19 @@ ${noteInstruction}
   "note":{
     "title":"記事タイトル（読みたくなるもの）",
     "free_lead":"無料リード文（200字・続きを読みたくなる終わり方）",
-    "paid_body":"有料本文（目利きポイント・仕入れコツ・注意点など600字程度）",
+    "paid_body":"有料本文（目利きポイント・仕入れコツ・注意点など600字程度・末尾に免責文）",
     "cta":"有料購読誘導文（50字以内）"
   }
 }
 
 日本語・せどり初〜中級者向け・リアルで共感しやすいトーンで。`;
+
+  // loading
+  document.getElementById('errorMsg').style.display = 'none';
+  showLoading(true);
+  const msgs = ['商品情報を分析中…','TikTok字幕を生成中…','Instagram文を作成中…','Canvaサムネを構成中…','note記事を執筆中…','ハッシュタグ選定中…','仕上げ中…'];
+  let mi = 0;
+  const iv = setInterval(() => { document.getElementById('loadingSub').textContent = msgs[mi++ % msgs.length]; }, 1200);
 
   try {
     const localKey = getApiKey();
@@ -980,18 +1160,13 @@ ${noteInstruction}
 
     let raw;
     if (useDirectApi) {
-      // ローカル: Groq APIを直接呼び出し
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localKey}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localKey}` },
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile',
           messages: [{ role: 'user', content: prompt }],
-          temperature: 0.8,
-          max_tokens: 4096,
+          temperature: 0.8, max_tokens: 4096,
           response_format: { type: 'json_object' }
         })
       });
@@ -999,36 +1174,32 @@ ${noteInstruction}
       if (!res.ok) throw new Error(`APIエラー ${res.status}: ${JSON.stringify(data)}`);
       raw = (data.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
     } else {
-      // Vercel: プロキシ経由
       const headers = { 'Content-Type': 'application/json' };
       if (localKey) headers['x-api-key'] = localKey;
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ prompt })
-      });
+      const res = await fetch('/api/generate', { method: 'POST', headers, body: JSON.stringify({ prompt }) });
       const data = await res.json();
       if (!res.ok) throw new Error(`APIエラー ${res.status}: ${JSON.stringify(data)}`);
       raw = (data.text || '').replace(/```json|```/g, '').trim();
     }
 
     let result;
-    try {
-      result = JSON.parse(raw);
-    } catch(pe) {
-      throw new Error('JSON解析エラー。AIの返答:\n' + raw.slice(0, 300));
-    }
+    try { result = JSON.parse(raw); } catch(pe) { throw new Error('JSON解析エラー。AIの返答:\n' + raw.slice(0, 300)); }
 
     clearInterval(iv);
     showLoading(false);
 
-    renderResult(result, types, profit, roi, parseInt(buy), parseInt(sell));
+    // compute totals
+    const totalProfit = validProducts.reduce((s, p) => s + (parseInt(p.sellPrice) - parseInt(p.buyPrice)), 0);
+    const totalBuy = validProducts.reduce((s, p) => s + parseInt(p.buyPrice), 0);
+    const totalSell = validProducts.reduce((s, p) => s + parseInt(p.sellPrice), 0);
+    const totalRoi = Math.round(totalProfit / totalBuy * 100);
+
+    renderResult(result, types, totalProfit, totalRoi, totalBuy, totalSell, validProducts);
     goPage(3);
 
   } catch(e) {
     clearInterval(iv);
     showLoading(false);
-    // エラーをページ上に表示
     const errDiv = document.getElementById('errorMsg');
     errDiv.textContent = '⚠️ ' + e.message;
     errDiv.style.display = 'block';
@@ -1037,15 +1208,28 @@ ${noteInstruction}
 }
 
 // ── render result ──
-function renderResult(r, types, profit, roi, buy, sell) {
+function renderResult(r, types, profit, roi, buy, sell, prods) {
   // profit bar
-  document.getElementById('profitBar').innerHTML = `
+  let profitHtml = `<div class="profit-bar">
     <div>
       <div class="profit-num">+¥${profit.toLocaleString()}</div>
       <div class="profit-detail">仕入れ ¥${buy.toLocaleString()} → 売値 ¥${sell.toLocaleString()}</div>
     </div>
     <div class="roi-badge">ROI ${roi}%</div>
-  `;
+  </div>`;
+
+  if (prods && prods.length > 1) {
+    profitHtml += '<div class="profit-summary">';
+    prods.forEach(p => {
+      const pr = parseInt(p.sellPrice) - parseInt(p.buyPrice);
+      profitHtml += `<div class="profit-summary-item">
+        <span class="profit-summary-name">${p.name}</span>
+        <span class="profit-summary-num">+¥${pr.toLocaleString()}</span>
+      </div>`;
+    });
+    profitHtml += '</div>';
+  }
+  document.getElementById('profitBar').innerHTML = profitHtml;
 
   const tabScroll = document.getElementById('tabScroll');
   const panesEl = document.getElementById('panes');
@@ -1175,6 +1359,144 @@ function renderResult(r, types, profit, roi, buy, sell) {
 
     panesEl.appendChild(pane);
   });
+
+  // Video generation area
+  const videoArea = document.getElementById('videoArea');
+  if (r.tiktok_studio) {
+    window._lastResult = r;
+    window._lastProducts = prods;
+    videoArea.innerHTML = `
+      <div class="video-gen-area">
+        <div class="sec-label" style="margin-top:0;">🎬 動画を自動生成</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+          商品画像＋字幕テロップから30秒の縦型動画を自動生成します。<br>
+          画像にはモザイクがかかります。
+        </p>
+        <button class="video-gen-btn" id="videoGenBtn" onclick="generateVideo()">
+          🎬 動画を生成する
+        </button>
+        <div id="videoResult"></div>
+      </div>
+    `;
+  }
+}
+
+// ── video generation ──
+async function generateVideo() {
+  const btn = document.getElementById('videoGenBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 動画を生成中…';
+  const resultDiv = document.getElementById('videoResult');
+  resultDiv.innerHTML = '<p style="font-size:12px;color:var(--muted);margin-top:12px;">Shotstack APIで動画をレンダリング中… 30秒〜1分ほどかかります</p>';
+
+  try {
+    const r = window._lastResult;
+    const prods = window._lastProducts || [];
+
+    // Get mosaic image URL from first product with images
+    let imageUrl = null;
+    const prodWithImage = prods.find(p => p.files && p.files.some(f => f.type.startsWith('image/')));
+    if (prodWithImage) {
+      const imgFile = prodWithImage.files.find(f => f.type.startsWith('image/'));
+      imageUrl = await mosaicAndUpload(imgFile);
+    }
+
+    const payload = {
+      action: 'render',
+      captions: r.tiktok_studio.captions,
+      hook: r.tiktok.hook,
+      priceBadge: r.canva.price_badge,
+      imageUrl
+    };
+
+    // Start render
+    const localKey = getApiKey();
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+
+    let renderId;
+    if (isLocal) {
+      throw new Error('動画生成はVercelデプロイ後に使えます。Shotstack APIキーをVercel環境変数に設定してください。');
+    }
+
+    const headers = { 'Content-Type': 'application/json' };
+    const res = await fetch('/api/video', { method: 'POST', headers, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `APIエラー ${res.status}`);
+    renderId = data.renderId;
+
+    // Poll for completion
+    let videoUrl = null;
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      const statusRes = await fetch('/api/video', {
+        method: 'POST', headers,
+        body: JSON.stringify({ action: 'status', renderId })
+      });
+      const statusData = await statusRes.json();
+      if (statusData.status === 'done' && statusData.url) {
+        videoUrl = statusData.url;
+        break;
+      } else if (statusData.status === 'failed') {
+        throw new Error('動画の生成に失敗しました');
+      }
+      btn.textContent = `⏳ レンダリング中… ${i * 3}秒`;
+    }
+
+    if (!videoUrl) throw new Error('タイムアウト：動画の生成に時間がかかりすぎました');
+
+    resultDiv.innerHTML = `
+      <div class="video-preview" style="margin-top:12px;">
+        <video src="${videoUrl}" controls playsinline style="width:100%;max-height:400px;border-radius:12px;"></video>
+      </div>
+      <a href="${videoUrl}" download="sedori-video.mp4" class="video-download-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">
+        📥 動画をダウンロード
+      </a>
+    `;
+    btn.textContent = '✓ 生成完了';
+  } catch (e) {
+    resultDiv.innerHTML = `<p style="font-size:12px;color:#ff6060;margin-top:12px;">⚠️ ${e.message}</p>`;
+    btn.textContent = '🎬 動画を生成する';
+    btn.disabled = false;
+  }
+}
+
+// ── mosaic image processing ──
+async function mosaicAndUpload(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 1080;
+      canvas.width = size;
+      canvas.height = 1920;
+      const ctx = canvas.getContext('2d');
+
+      // Draw image to fill canvas
+      const scale = Math.max(size / img.width, 1920 / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ctx.drawImage(img, (size - w) / 2, (1920 - h) / 2, w, h);
+
+      // Apply mosaic (pixelate)
+      const mosaicSize = 20;
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = Math.ceil(size / mosaicSize);
+      tempCanvas.height = Math.ceil(1920 / mosaicSize);
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(tempCanvas, 0, 0, size, 1920);
+
+      // Add dark overlay for readability
+      ctx.fillStyle = 'rgba(13,13,20,0.6)';
+      ctx.fillRect(0, 0, size, 1920);
+
+      // Convert to data URL (Shotstack can use data URLs for stage environment)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      resolve(dataUrl);
+    };
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 function block(label, text, bodyClass) {
@@ -1239,15 +1561,13 @@ function showLoading(show) {
 }
 
 function reset() {
-  files = []; result = null;
-  document.getElementById('thumbRow').innerHTML = '';
-  document.getElementById('productName').value = '';
-  document.getElementById('buyPrice').value = '';
-  document.getElementById('sellPrice').value = '';
-  document.getElementById('location').value = '';
-  document.getElementById('comment').value = '';
+  result = null;
+  products = [createProductData()];
+  activeProductIdx = 0;
+  renderProductTabs();
+  renderProductForm(0);
   document.querySelectorAll('.chip').forEach(c => c.classList.add('on'));
-  updateUploadBox();
+  document.getElementById('videoArea').innerHTML = '';
   goPage(0);
 }
 </script>
