@@ -1411,10 +1411,13 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
             const tImg = await loadImage(imgFile);
             const sc = Math.max(400 / tImg.width, 240 / tImg.height);
             tCtx.drawImage(tImg, (400 - tImg.width * sc) / 2, (240 - tImg.height * sc) / 2, tImg.width * sc, tImg.height * sc);
-            // Blur
-            tCtx.filter = 'blur(12px)';
-            tCtx.drawImage(thumbCanvas, 0, 0);
-            tCtx.filter = 'none';
+            // Blur (Safari compatible: shrink → stretch)
+            const blurT = document.createElement('canvas');
+            blurT.width = 20; blurT.height = 12;
+            blurT.getContext('2d').drawImage(thumbCanvas, 0, 0, 20, 12);
+            tCtx.imageSmoothingEnabled = true;
+            tCtx.imageSmoothingQuality = 'high';
+            tCtx.drawImage(blurT, 0, 0, 400, 240);
             tCtx.fillStyle = 'rgba(0,0,0,0.45)';
             tCtx.fillRect(0, 0, 400, 240);
             thumbBg = `background-image:url(${thumbCanvas.toDataURL('image/jpeg',0.7)});background-size:cover;background-position:center;`;
@@ -1614,9 +1617,15 @@ async function generateVideo() {
         const w = bgImage.width * scale;
         const h = bgImage.height * scale;
         ctx.drawImage(bgImage, (W - w) / 2, (H - h) / 2, w, h);
-        ctx.filter = 'blur(20px)';
-        ctx.drawImage(canvas, 0, 0);
-        ctx.filter = 'none';
+        // Blur: shrink → stretch back (Safari compatible)
+        const blurC = document.createElement('canvas');
+        blurC.width = Math.ceil(W / 12);
+        blurC.height = Math.ceil(H / 12);
+        const blurCtx = blurC.getContext('2d');
+        blurCtx.drawImage(canvas, 0, 0, blurC.width, blurC.height);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(blurC, 0, 0, W, H);
       } else {
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, '#1a1a2e');
