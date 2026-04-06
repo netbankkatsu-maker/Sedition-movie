@@ -994,24 +994,23 @@ function renderProductForm(idx) {
   // file input — auto-split: 2 images per product (front + back)
   const fileInput = formsEl.querySelector('.p-file-input');
   fileInput.addEventListener('change', e => {
+    saveCurrentProduct();
     const newFiles = [...e.target.files].filter(f => f.type.startsWith('image/'));
+    let targetIdx = activeProductIdx;
     for (const f of newFiles) {
-      const currentProduct = products[activeProductIdx];
-      const imageCount = currentProduct.files.filter(x => x.type.startsWith('image/')).length;
-      if (imageCount >= 2 && products.length < 3) {
-        // Current product already has 2 images → auto-create next product
-        saveCurrentProduct();
-        products.push(createProductData());
-        activeProductIdx = products.length - 1;
-        products[activeProductIdx].files.push(f);
-        renderProductTabs();
-        renderProductForm(activeProductIdx);
-        return; // re-render triggers new file input, stop processing here
-      } else {
-        addFileToProduct(activeProductIdx, f);
+      const imgCount = products[targetIdx].files.filter(x => x.type.startsWith('image/')).length;
+      if (imgCount >= 2) {
+        // Current product full → create or move to next
+        if (products.length < 3) {
+          products.push(createProductData());
+        }
+        targetIdx = Math.min(targetIdx + 1, products.length - 1);
       }
+      products[targetIdx].files.push(f);
     }
-    fileInput.value = '';
+    activeProductIdx = targetIdx;
+    renderProductTabs();
+    renderProductForm(activeProductIdx);
   });
 
   // render existing thumbs
