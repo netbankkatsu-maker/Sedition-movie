@@ -1583,89 +1583,116 @@ async function generateVideo() {
     for (let frame = 0; frame < totalFrames; frame++) {
       const t = frame / fps; // current time in seconds
 
-      // Background
+      // Background with slow zoom effect
+      ctx.save();
+      const zoom = 1 + (t / totalDuration) * 0.15; // 1.0 → 1.15 over 30s
+      ctx.translate(W / 2, H / 2);
+      ctx.scale(zoom, zoom);
+      ctx.translate(-W / 2, -H / 2);
       if (bgImage) {
         const scale = Math.max(W / bgImage.width, H / bgImage.height);
         const w = bgImage.width * scale;
         const h = bgImage.height * scale;
         ctx.drawImage(bgImage, (W - w) / 2, (H - h) / 2, w, h);
-        // Blur effect
         ctx.filter = 'blur(20px)';
         ctx.drawImage(canvas, 0, 0);
         ctx.filter = 'none';
-        // Dark overlay
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        ctx.fillRect(0, 0, W, H);
       } else {
-        // Gradient background
         const grad = ctx.createLinearGradient(0, 0, 0, H);
         grad.addColorStop(0, '#1a1a2e');
         grad.addColorStop(0.5, '#16213e');
         grad.addColorStop(1, '#0f3460');
         ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
+        ctx.fillRect(-50, -50, W + 100, H + 100);
+      }
+      ctx.restore();
+      // Dark overlay
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, 0, W, H);
+
+      // Helper: draw outlined text (stroke + fill + glow)
+      function drawText(text, x, y, color, fontSize, maxW, lineH, popProgress) {
+        const scale = popProgress !== undefined ? Math.min(popProgress * 1.2, 1) * (popProgress < 0.3 ? 0.8 + popProgress * 0.67 : 1) : 1;
+        ctx.save();
+        if (scale !== 1) {
+          ctx.translate(x, y);
+          ctx.scale(scale, scale);
+          ctx.translate(-x, -y);
+        }
+        ctx.font = `900 ${fontSize}px "Hiragino Sans", "Yu Gothic", sans-serif`;
+        ctx.textAlign = 'center';
+        // Glow
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 16;
+        // Outline
+        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+        ctx.lineWidth = 6;
+        ctx.lineJoin = 'round';
+        wrapTextStroke(ctx, text, x, y, maxW, lineH);
+        // Fill
+        ctx.fillStyle = color;
+        ctx.shadowBlur = 0;
+        wrapText(ctx, text, x, y, maxW, lineH);
+        ctx.restore();
       }
 
-      // Hook text (0-3 seconds)
+      // Hook text (0-3 seconds) — pop-up animation
       if (t < 3) {
         const alpha = t < 0.5 ? t / 0.5 : (t > 2.5 ? (3 - t) / 0.5 : 1);
+        const pop = Math.min(t / 0.2, 1); // quick pop in 0.2s
         ctx.globalAlpha = alpha;
-        ctx.font = `900 ${fs.hook}px "Hiragino Sans", "Yu Gothic", sans-serif`;
-        ctx.fillStyle = '#ff6b35';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = 'rgba(0,0,0,0.8)';
-        ctx.shadowBlur = 12;
-        wrapText(ctx, hook, W / 2, H / 2, W - 60, 64);
+        drawText(hook, W / 2, H / 2, '#ff6b35', fs.hook, W - 60, fs.hook + 12, pop);
         ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
       }
 
-      // Price badge (3-27 seconds, top area)
+      // Price badge (3-27 seconds)
       if (t >= 3 && t < 27 && priceBadge) {
+        const badgePop = Math.min((t - 3) / 0.2, 1);
+        const badgeScale = badgePop < 1 ? 0.5 + badgePop * 0.5 : 1;
+        ctx.save();
         ctx.font = `900 ${fs.badge}px "Hiragino Sans", "Yu Gothic", sans-serif`;
         const tw = ctx.measureText(priceBadge).width;
-        const bx = W - tw - 40, by = 40;
+        const bx = W - tw / 2 - 30, by = 55;
+        ctx.translate(bx, by);
+        ctx.scale(badgeScale, badgeScale);
+        ctx.translate(-bx, -by);
+        // Badge background
         ctx.fillStyle = '#ff6b35';
-        roundRect(ctx, bx - 12, by - 8, tw + 24, 44, 10);
+        ctx.shadowColor = 'rgba(255,107,53,0.5)';
+        ctx.shadowBlur = 12;
+        roundRect(ctx, bx - tw / 2 - 14, by - 22, tw + 28, 44, 10);
         ctx.fill();
+        ctx.shadowBlur = 0;
+        // Badge text
         ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'left';
-        ctx.fillText(priceBadge, bx, by + 28);
         ctx.textAlign = 'center';
+        ctx.fillText(priceBadge, bx, by + 8);
+        ctx.restore();
       }
 
-      // Subtitles
+      // Subtitles — pop-up animation
       for (const cap of captions) {
         const start = parseTime(cap.start);
         const end = parseTime(cap.end);
         if (t >= start && t < end) {
-          const fadeIn = Math.min((t - start) / 0.3, 1);
+          const elapsed = t - start;
           const fadeOut = Math.min((end - t) / 0.3, 1);
-          ctx.globalAlpha = Math.min(fadeIn, fadeOut);
-          ctx.font = `900 ${fs.sub}px "Hiragino Sans", "Yu Gothic", sans-serif`;
-          ctx.fillStyle = '#ffffff';
-          ctx.textAlign = 'center';
-          ctx.shadowColor = 'rgba(0,0,0,0.8)';
-          ctx.shadowBlur = 10;
-          wrapText(ctx, cap.text, W / 2, H - 180, W - 40, 46);
+          const pop = Math.min(elapsed / 0.15, 1);
+          ctx.globalAlpha = fadeOut;
+          drawText(cap.text, W / 2, H - 180, '#ffffff', fs.sub, W - 40, fs.sub + 10, pop);
           ctx.globalAlpha = 1;
-          ctx.shadowBlur = 0;
           break;
         }
       }
 
-      // CTA (27-30 seconds)
+      // CTA (27-30 seconds) — pop-up
       if (t >= 27) {
-        const alpha = Math.min((t - 27) / 0.5, 1);
+        const elapsed = t - 27;
+        const alpha = Math.min(elapsed / 0.5, 1);
+        const pop = Math.min(elapsed / 0.3, 1);
         ctx.globalAlpha = alpha;
-        ctx.font = `900 ${fs.sub}px "Hiragino Sans", "Yu Gothic", sans-serif`;
-        ctx.fillStyle = '#ffc844';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = 'rgba(0,0,0,0.8)';
-        ctx.shadowBlur = 10;
-        wrapText(ctx, ctaText, W / 2, H / 2 + 100, W - 60, fs.sub + 10);
+        drawText(ctaText, W / 2, H / 2 + 100, '#ffc844', fs.sub, W - 60, fs.sub + 10, pop);
         ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
       }
 
       // Progress update
@@ -1720,6 +1747,23 @@ function parseTime(t) {
   const parts = (t || '0:00').split(':');
   if (parts.length === 2) return parseInt(parts[0]) * 60 + parseInt(parts[1]);
   return parseInt(parts[0]);
+}
+
+function wrapTextStroke(ctx, text, x, y, maxWidth, lineHeight) {
+  const chars = text.split('');
+  let line = '';
+  let ty = y;
+  for (const ch of chars) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.strokeText(line, x, ty);
+      line = ch;
+      ty += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  ctx.strokeText(line, x, ty);
 }
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
