@@ -991,9 +991,28 @@ function renderProductForm(idx) {
     </div>
   `;
 
-  // file input
+  // file input — auto-split: 2 images per product (front + back)
   const fileInput = formsEl.querySelector('.p-file-input');
-  fileInput.addEventListener('change', e => { [...e.target.files].forEach(f => addFileToProduct(idx, f)); fileInput.value=''; });
+  fileInput.addEventListener('change', e => {
+    const newFiles = [...e.target.files].filter(f => f.type.startsWith('image/'));
+    for (const f of newFiles) {
+      const currentProduct = products[activeProductIdx];
+      const imageCount = currentProduct.files.filter(x => x.type.startsWith('image/')).length;
+      if (imageCount >= 2 && products.length < 3) {
+        // Current product already has 2 images → auto-create next product
+        saveCurrentProduct();
+        products.push(createProductData());
+        activeProductIdx = products.length - 1;
+        products[activeProductIdx].files.push(f);
+        renderProductTabs();
+        renderProductForm(activeProductIdx);
+        return; // re-render triggers new file input, stop processing here
+      } else {
+        addFileToProduct(activeProductIdx, f);
+      }
+    }
+    fileInput.value = '';
+  });
 
   // render existing thumbs
   renderThumbs(idx);
@@ -1562,6 +1581,12 @@ async function generateVideo() {
     // Read edited values from UI
     const hook = document.getElementById('vidHook')?.value || r.tiktok?.hook || '';
     const priceBadge = document.getElementById('vidBadge')?.value || r.canva?.price_badge || '';
+
+    // Profit data for profit bar display
+    const validProds = prods.filter(p => p.name && p.buyPrice && p.sellPrice);
+    const totalProfit = validProds.reduce((s, p) => s + (parseInt(p.sellPrice) - parseInt(p.buyPrice)), 0);
+    const totalBuy = validProds.reduce((s, p) => s + parseInt(p.buyPrice), 0);
+    const totalRoi = totalBuy > 0 ? Math.round(totalProfit / totalBuy * 100) : 0;
     const ctaText = document.getElementById('vidCta')?.value || '詳しくはnoteで👇';
     const captionInputs = document.querySelectorAll('.vid-caption');
     const captions = (r.tiktok_studio?.captions || []).map((c, i) => ({
@@ -1664,28 +1689,60 @@ async function generateVideo() {
         ctx.globalAlpha = 1;
       }
 
-      // Price badge (3-27 seconds)
-      if (t >= 3 && t < 27 && priceBadge) {
-        const badgePop = Math.min((t - 3) / 0.2, 1);
-        const badgeScale = badgePop < 1 ? 0.5 + badgePop * 0.5 : 1;
+      // Profit bar (3-27 seconds) — same design as result screen
+      if (t >= 3 && t < 27 && totalProfit > 0) {
+        const barPop = Math.min((t - 3) / 0.3, 1);
+        const barScale = barPop < 1 ? 0.7 + barPop * 0.3 : 1;
+        const barAlpha = barPop;
         ctx.save();
-        ctx.font = `900 ${fs.badge}px "Hiragino Sans", "Yu Gothic", sans-serif`;
-        const tw = ctx.measureText(priceBadge).width;
-        const bx = W - tw / 2 - 30, by = 55;
-        ctx.translate(bx, by);
-        ctx.scale(badgeScale, badgeScale);
-        ctx.translate(-bx, -by);
-        // Badge background
-        ctx.fillStyle = '#ff6b35';
-        ctx.shadowColor = 'rgba(255,107,53,0.5)';
-        ctx.shadowBlur = 12;
-        roundRect(ctx, bx - tw / 2 - 14, by - 22, tw + 28, 44, 10);
+        ctx.globalAlpha = barAlpha;
+        const barX = 30, barY = 40, barW = W - 60, barH = 100;
+        ctx.translate(barX + barW / 2, barY + barH / 2);
+        ctx.scale(barScale, barScale);
+        ctx.translate(-(barX + barW / 2), -(barY + barH / 2));
+
+        // Bar background
+        ctx.fillStyle = 'rgba(23,23,31,0.85)';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 16;
+        roundRect(ctx, barX, barY, barW, barH, 16);
         ctx.fill();
         ctx.shadowBlur = 0;
-        // Badge text
-        ctx.fillStyle = '#ffffff';
+        // Border
+        ctx.strokeStyle = 'rgba(42,42,60,0.8)';
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, barX, barY, barW, barH, 16);
+        ctx.stroke();
+
+        // +¥profit (green, large)
+        ctx.font = `900 38px "Hiragino Sans", "Yu Gothic", sans-serif`;
+        ctx.fillStyle = '#00d68f';
+        ctx.textAlign = 'left';
+        ctx.fillText(`+¥${totalProfit.toLocaleString()}`, barX + 18, barY + 45);
+
+        // Sub text
+        ctx.font = `700 14px "Hiragino Sans", "Yu Gothic", sans-serif`;
+        ctx.fillStyle = '#7a7a9a';
+        ctx.fillText(`仕入れ ¥${totalBuy.toLocaleString()} → 売値 ¥${(totalBuy + totalProfit).toLocaleString()}`, barX + 18, barY + 72);
+
+        // ROI badge (right side)
+        const roiText = `ROI ${totalRoi}%`;
+        ctx.font = `900 16px "Hiragino Sans", "Yu Gothic", sans-serif`;
+        const roiW = ctx.measureText(roiText).width + 24;
+        const roiX = barX + barW - roiW - 16;
+        const roiY = barY + 30;
+        ctx.fillStyle = 'rgba(0,214,143,0.15)';
+        ctx.strokeStyle = 'rgba(0,214,143,0.3)';
+        ctx.lineWidth = 1;
+        roundRect(ctx, roiX, roiY, roiW, 36, 18);
+        ctx.fill();
+        roundRect(ctx, roiX, roiY, roiW, 36, 18);
+        ctx.stroke();
+        ctx.fillStyle = '#00d68f';
         ctx.textAlign = 'center';
-        ctx.fillText(priceBadge, bx, by + 8);
+        ctx.fillText(roiText, roiX + roiW / 2, roiY + 24);
+
+        ctx.globalAlpha = 1;
         ctx.restore();
       }
 
