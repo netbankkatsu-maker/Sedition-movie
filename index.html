@@ -947,10 +947,14 @@ function saveCurrentProduct() {
 
 function renderProductTabs() {
   const tabsEl = document.getElementById('productTabs');
-  tabsEl.innerHTML = products.map((p, i) => {
-    const filled = p.name && p.buyPrice && p.sellPrice;
-    return `<button class="product-tab${i === activeProductIdx ? ' active' : ''}${filled ? ' filled' : ''}" onclick="switchProduct(${i})">📦 商品${i + 1}</button>`;
-  }).join('');
+  if (products.length <= 1) {
+    tabsEl.innerHTML = '';
+  } else {
+    tabsEl.innerHTML = products.map((p, i) => {
+      const filled = p.name && p.buyPrice && p.sellPrice;
+      return `<button class="product-tab${i === activeProductIdx ? ' active' : ''}${filled ? ' filled' : ''}" onclick="switchProduct(${i})">📦 商品${i + 1}</button>`;
+    }).join('');
+  }
   document.getElementById('addProductBtn').style.display = products.length >= 3 ? 'none' : 'flex';
 }
 
