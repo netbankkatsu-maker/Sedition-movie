@@ -994,7 +994,6 @@ function esc2(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').r
 
 function addFileToProduct(idx, f) {
   products[idx].files.push(f);
-  if (idx === activeProductIdx) renderThumbs(idx);
 }
 
 // ── scan product from photo ──
@@ -1071,31 +1070,7 @@ async function scanAllProducts() {
   }
 }
 
-function renderThumbs(idx) {
-  const thumbRow = document.querySelector('.p-thumbs');
-  if (!thumbRow) return;
-  thumbRow.innerHTML = '';
-  const uploadBox = document.querySelector('.upload-box');
-  uploadBox.classList.toggle('has-files', products[idx].files.length > 0);
-
-  products[idx].files.forEach((f, fi) => {
-    const div = document.createElement('div');
-    div.className = 'thumb';
-    if (f.type.startsWith('image/')) {
-      const img = document.createElement('img');
-      img.src = URL.createObjectURL(f);
-      div.appendChild(img);
-    } else {
-      div.classList.add('thumb-video');
-      div.textContent = '🎬';
-    }
-    const del = document.createElement('button');
-    del.className = 'del'; del.textContent = '✕';
-    del.onclick = (e) => { e.stopPropagation(); products[idx].files.splice(fi, 1); renderThumbs(idx); };
-    div.appendChild(del);
-    thumbRow.appendChild(div);
-  });
-}
+// renderThumbs removed — global thumb display handles all photos
 
 function switchProduct(idx) {
   saveCurrentProduct();
