@@ -1028,7 +1028,7 @@ async function scanProduct(idx) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localKey}` },
         body: JSON.stringify({
-          model: 'llama-3.2-90b-vision-preview',
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
           messages: [{ role: 'user', content: [
             { type: 'text', text: '商品画像から商品名・型番・カテゴリを読み取ってJSONで返して。{"productName":"","modelNumber":"","category":"おもちゃ・ゲーム/家電・スマホ/ブランド品/本・CD・DVD/スポーツ用品/食品・飲料/その他のいずれか"}' },
             { type: 'image_url', image_url: { url: base64 } }

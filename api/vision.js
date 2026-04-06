@@ -22,7 +22,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'llama-3.2-90b-vision-preview',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages: [{
           role: 'user',
           content: [
@@ -52,7 +52,8 @@ JSONのみ出力してください。`
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: JSON.stringify(data) });
+      console.error('Groq Vision error:', JSON.stringify(data));
+      return res.status(response.status).json({ error: `Groq Vision ${response.status}: ${data?.error?.message || JSON.stringify(data)}` });
     }
 
     const text = data.choices?.[0]?.message?.content || '';
