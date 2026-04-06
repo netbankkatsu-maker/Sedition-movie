@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>せどりAI</title>
+<title>せどり動画作成くん</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -798,9 +798,8 @@ html, body {
 <!-- HEADER -->
 <div class="header">
   <div class="header-icon">🏷️</div>
-  <h1>せどりAI</h1>
-  <div class="header-badge">AUTO</div>
-  <div class="api-key-badge not-set" id="apiKeyBadge" onclick="showApiModal()">🔑 未設定</div>
+  <h1>せどり動画作成くん</h1>
+  <div class="api-key-badge not-set" id="apiKeyBadge" onclick="showApiModal()" style="margin-left:auto;">🔑</div>
 </div>
 
 <!-- PROGRESS -->
@@ -822,8 +821,8 @@ html, body {
   <div class="toggle-card">
     <div class="toggle-row">
       <div>
-        <div class="toggle-label">商品名をnoteに載せる</div>
-        <div class="toggle-sub">無料部分にも表示される</div>
+        <div class="toggle-label">商品名をnote有料部分に載せる</div>
+        <div class="toggle-sub">無料部分はカテゴリのみ表示</div>
       </div>
       <label class="toggle"><input type="checkbox" id="showName" checked><span class="toggle-slider"></span></label>
     </div>
@@ -1172,7 +1171,7 @@ async function generate() {
 
   const noteInstruction = `
 note記事での情報公開ルール：
-- 商品名：${showName ? '無料部分にも記載してOK' : '商品名は伏せて「ある商品」など表現すること'}
+- 商品名：${showName ? '有料部分にのみ商品名を記載すること。無料部分ではカテゴリー名（例：「ある家電」「あるおもちゃ」）で表現し、商品名は出さない' : '商品名は伏せて「ある商品」など表現すること（無料・有料どちらも）'}
 - 仕入れ値・売値：${showPrice ? '有料部分にのみ記載すること（無料部分には載せない）' : '価格情報は一切記載しないこと'}
 - 仕入れ先：${showLocation ? '有料部分に記載してOK' : '仕入れ先は伏せて「某店舗」など表現すること'}
 
@@ -1437,18 +1436,70 @@ function renderResult(r, types, profit, roi, buy, sell, prods) {
   if (r.tiktok_studio) {
     window._lastResult = r;
     window._lastProducts = prods;
+
+    const caps = r.tiktok_studio.captions || [];
+    const captionEditors = caps.map((c, i) => `
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+        <span style="font-size:10px;color:var(--muted);width:50px;flex-shrink:0;">${c.start}-${c.end}</span>
+        <input type="text" class="vid-caption" data-idx="${i}" value="${esc2(c.text)}" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:8px 10px;outline:none;">
+      </div>
+    `).join('');
+
     videoArea.innerHTML = `
       <div class="video-gen-area">
         <div class="sec-label" style="margin-top:0;">🎬 動画を自動生成</div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
-          商品画像＋字幕テロップから30秒の縦型動画を自動生成します。
-        </p>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;color:var(--muted);font-weight:700;">フックテキスト（最初の3秒）</label>
+          <input type="text" id="vidHook" value="${esc2(r.tiktok.hook)}" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--accent);font-family:inherit;font-size:15px;font-weight:900;padding:10px;outline:none;margin-top:4px;">
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;color:var(--muted);font-weight:700;">価格バッジ</label>
+          <input type="text" id="vidBadge" value="${esc2(r.canva.price_badge)}" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;padding:10px;outline:none;margin-top:4px;">
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;color:var(--muted);font-weight:700;">字幕テロップ（編集可）</label>
+          <div style="margin-top:4px;">${captionEditors}</div>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;color:var(--muted);font-weight:700;">CTA（最後の3秒）</label>
+          <input type="text" id="vidCta" value="詳しくはnoteで👇" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;padding:10px;outline:none;margin-top:4px;">
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11px;color:var(--muted);font-weight:700;">文字サイズ</label>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button class="vid-size-btn" data-size="small" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">小</button>
+            <button class="vid-size-btn active" data-size="medium" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--accent);background:rgba(255,107,53,0.1);color:var(--accent);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">中（推奨）</button>
+            <button class="vid-size-btn" data-size="large" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">大</button>
+          </div>
+        </div>
+
         <button class="video-gen-btn" id="videoGenBtn" onclick="generateVideo()">
           🎬 動画を生成する
         </button>
         <div id="videoResult"></div>
       </div>
     `;
+
+    // Size button toggle
+    document.querySelectorAll('.vid-size-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.vid-size-btn').forEach(x => {
+          x.style.borderColor = 'var(--border)';
+          x.style.background = 'var(--card)';
+          x.style.color = 'var(--muted)';
+        });
+        b.style.borderColor = 'var(--accent)';
+        b.style.background = 'rgba(255,107,53,0.1)';
+        b.style.color = 'var(--accent)';
+        window._vidFontSize = b.dataset.size;
+      });
+    });
+    window._vidFontSize = 'medium';
   }
 }
 
@@ -1463,9 +1514,20 @@ async function generateVideo() {
   try {
     const r = window._lastResult;
     const prods = window._lastProducts || [];
-    const captions = r.tiktok_studio?.captions || [];
-    const hook = r.tiktok?.hook || '';
-    const priceBadge = r.canva?.price_badge || '';
+
+    // Read edited values from UI
+    const hook = document.getElementById('vidHook')?.value || r.tiktok?.hook || '';
+    const priceBadge = document.getElementById('vidBadge')?.value || r.canva?.price_badge || '';
+    const ctaText = document.getElementById('vidCta')?.value || '詳しくはnoteで👇';
+    const captionInputs = document.querySelectorAll('.vid-caption');
+    const captions = (r.tiktok_studio?.captions || []).map((c, i) => ({
+      ...c,
+      text: captionInputs[i]?.value || c.text
+    }));
+
+    // Font size
+    const sizeMap = { small: { hook: 40, sub: 28, badge: 22 }, medium: { hook: 52, sub: 36, badge: 28 }, large: { hook: 64, sub: 44, badge: 34 } };
+    const fs = sizeMap[window._vidFontSize || 'medium'];
 
     // Load product image
     let bgImage = null;
@@ -1505,7 +1567,17 @@ async function generateVideo() {
         const w = bgImage.width * scale;
         const h = bgImage.height * scale;
         ctx.drawImage(bgImage, (W - w) / 2, (H - h) / 2, w, h);
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        // Mosaic effect
+        const mosaicSize = 18;
+        ctx.imageSmoothingEnabled = false;
+        const tempC = document.createElement('canvas');
+        tempC.width = Math.ceil(W / mosaicSize);
+        tempC.height = Math.ceil(H / mosaicSize);
+        tempC.getContext('2d').drawImage(canvas, 0, 0, tempC.width, tempC.height);
+        ctx.drawImage(tempC, 0, 0, W, H);
+        ctx.imageSmoothingEnabled = true;
+        // Dark overlay
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
         ctx.fillRect(0, 0, W, H);
       } else {
         // Gradient background
@@ -1521,7 +1593,7 @@ async function generateVideo() {
       if (t < 3) {
         const alpha = t < 0.5 ? t / 0.5 : (t > 2.5 ? (3 - t) / 0.5 : 1);
         ctx.globalAlpha = alpha;
-        ctx.font = '900 52px "Hiragino Sans", "Yu Gothic", sans-serif';
+        ctx.font = `900 ${fs.hook}px "Hiragino Sans", "Yu Gothic", sans-serif`;
         ctx.fillStyle = '#ff6b35';
         ctx.textAlign = 'center';
         ctx.shadowColor = 'rgba(0,0,0,0.8)';
@@ -1533,7 +1605,7 @@ async function generateVideo() {
 
       // Price badge (3-27 seconds, top area)
       if (t >= 3 && t < 27 && priceBadge) {
-        ctx.font = '900 28px "Hiragino Sans", "Yu Gothic", sans-serif';
+        ctx.font = `900 ${fs.badge}px "Hiragino Sans", "Yu Gothic", sans-serif`;
         const tw = ctx.measureText(priceBadge).width;
         const bx = W - tw - 40, by = 40;
         ctx.fillStyle = '#ff6b35';
@@ -1553,7 +1625,7 @@ async function generateVideo() {
           const fadeIn = Math.min((t - start) / 0.3, 1);
           const fadeOut = Math.min((end - t) / 0.3, 1);
           ctx.globalAlpha = Math.min(fadeIn, fadeOut);
-          ctx.font = '900 36px "Hiragino Sans", "Yu Gothic", sans-serif';
+          ctx.font = `900 ${fs.sub}px "Hiragino Sans", "Yu Gothic", sans-serif`;
           ctx.fillStyle = '#ffffff';
           ctx.textAlign = 'center';
           ctx.shadowColor = 'rgba(0,0,0,0.8)';
@@ -1569,12 +1641,12 @@ async function generateVideo() {
       if (t >= 27) {
         const alpha = Math.min((t - 27) / 0.5, 1);
         ctx.globalAlpha = alpha;
-        ctx.font = '900 34px "Hiragino Sans", "Yu Gothic", sans-serif';
+        ctx.font = `900 ${fs.sub}px "Hiragino Sans", "Yu Gothic", sans-serif`;
         ctx.fillStyle = '#ffc844';
         ctx.textAlign = 'center';
         ctx.shadowColor = 'rgba(0,0,0,0.8)';
         ctx.shadowBlur = 10;
-        ctx.fillText('noteで利益商品を発信中！', W / 2, H / 2 + 100);
+        wrapText(ctx, ctaText, W / 2, H / 2 + 100, W - 60, fs.sub + 10);
         ctx.globalAlpha = 1;
         ctx.shadowBlur = 0;
       }
