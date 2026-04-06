@@ -1016,12 +1016,8 @@ async function scanProduct(idx) {
   btn.textContent = '📷 読み取り中…';
 
   try {
-    // Convert image to base64
-    const base64 = await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.readAsDataURL(imgFile);
-    });
+    // Compress image before sending (max 800px, quality 0.7)
+    const base64 = await compressImage(imgFile, 800, 800, 0.7);
 
     const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
     let result;
