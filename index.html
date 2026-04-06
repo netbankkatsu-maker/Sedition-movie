@@ -964,7 +964,6 @@ function renderProductTabs() {
       return `<button class="product-tab${i === activeProductIdx ? ' active' : ''}${filled ? ' filled' : ''}" onclick="switchProduct(${i})">📦 商品${i + 1}</button>`;
     }).join('');
   }
-  document.getElementById('addProductBtn').style.display = products.length >= 3 ? 'none' : 'flex';
 }
 
 function renderProductForm(idx) {
@@ -972,18 +971,7 @@ function renderProductForm(idx) {
   const formsEl = document.getElementById('productForms');
   formsEl.innerHTML = `
     <div id="productForm-${idx}">
-      <div class="sec-label" style="margin-top:12px;">📸 写真・動画</div>
-      <input type="file" class="p-file-input" accept="image/*,video/*" multiple style="display:none">
-      <div class="upload-box" onclick="this.previousElementSibling.click()">
-        <div class="upload-emoji">📁</div>
-        <div class="upload-title">タップして選択</div>
-        <div class="upload-sub">写真・動画 複数OK</div>
-      </div>
-      <div class="thumb-row p-thumbs"></div>
-
-      <button class="scan-btn" onclick="scanAllProducts()">📷 写真から商品名を読み取る</button>
-
-      <div class="sec-label">💰 商品情報</div>
+      <div class="sec-label" style="margin-top:12px;">💰 商品${idx + 1}の情報</div>
       <div class="input-card">
         <div class="input-row"><label>商品名</label><input type="text" class="p-name" placeholder="例：レゴ 10302" value="${esc2(p.name)}"></div>
         <div class="input-row"><label>カテゴリー</label>
@@ -1000,30 +988,6 @@ function renderProductForm(idx) {
     </div>
   `;
 
-  // file input — auto-split: 2 images per product (front + back)
-  const fileInput = formsEl.querySelector('.p-file-input');
-  fileInput.addEventListener('change', e => {
-    saveCurrentProduct();
-    const newFiles = [...e.target.files].filter(f => f.type.startsWith('image/'));
-    let targetIdx = activeProductIdx;
-    for (const f of newFiles) {
-      const imgCount = products[targetIdx].files.filter(x => x.type.startsWith('image/')).length;
-      if (imgCount >= 2) {
-        // Current product full → create or move to next
-        if (products.length < 3) {
-          products.push(createProductData());
-        }
-        targetIdx = Math.min(targetIdx + 1, products.length - 1);
-      }
-      products[targetIdx].files.push(f);
-    }
-    activeProductIdx = targetIdx;
-    renderProductTabs();
-    renderProductForm(activeProductIdx);
-  });
-
-  // render existing thumbs
-  renderThumbs(idx);
 }
 
 function esc2(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
