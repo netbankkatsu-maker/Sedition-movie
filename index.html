@@ -799,7 +799,6 @@ html, body {
 <div class="header">
   <div class="header-icon">🏷️</div>
   <h1>せどり動画作成くん</h1>
-  <div class="api-key-badge not-set" id="apiKeyBadge" onclick="showApiModal()" style="margin-left:auto;">🔑</div>
 </div>
 
 <!-- PROGRESS -->
@@ -846,7 +845,7 @@ html, body {
   <div class="chips">
     <div class="chip on" data-type="tiktok"><span class="chip-icon">🎵</span>TikTok</div>
     <div class="chip on" data-type="instagram"><span class="chip-icon">📷</span>Instagram</div>
-    <div class="chip on" data-type="canva"><span class="chip-icon">🎨</span>Canvaサムネ</div>
+    <div class="chip on" data-type="canva"><span class="chip-icon">🎨</span>noteサムネ</div>
     <div class="chip on" data-type="note"><span class="chip-icon">📝</span>有料note</div>
   </div>
 
@@ -1244,7 +1243,7 @@ ${noteInstruction}${multiProductNote}
   // loading
   document.getElementById('errorMsg').style.display = 'none';
   showLoading(true);
-  const msgs = ['商品情報を分析中…','TikTok字幕を生成中…','Instagram文を作成中…','Canvaサムネを構成中…','note記事を執筆中…','ハッシュタグ選定中…','仕上げ中…'];
+  const msgs = ['商品情報を分析中…','TikTok字幕を生成中…','Instagram文を作成中…','noteサムネを構成中…','note記事を執筆中…','ハッシュタグ選定中…','仕上げ中…'];
   let mi = 0;
   const iv = setInterval(() => { document.getElementById('loadingSub').textContent = msgs[mi++ % msgs.length]; }, 1200);
 
@@ -1290,7 +1289,7 @@ ${noteInstruction}${multiProductNote}
     const totalSell = validProducts.reduce((s, p) => s + parseInt(p.sellPrice), 0);
     const totalRoi = Math.round(totalProfit / totalBuy * 100);
 
-    renderResult(result, types, totalProfit, totalRoi, totalBuy, totalSell, validProducts);
+    await renderResult(result, types, totalProfit, totalRoi, totalBuy, totalSell, validProducts);
     goPage(3);
 
   } catch(e) {
@@ -1304,7 +1303,7 @@ ${noteInstruction}${multiProductNote}
 }
 
 // ── render result ──
-function renderResult(r, types, profit, roi, buy, sell, prods) {
+async function renderResult(r, types, profit, roi, buy, sell, prods) {
   // profit bar
   let profitHtml = `<div class="profit-bar">
     <div>
@@ -1335,7 +1334,7 @@ function renderResult(r, types, profit, roi, buy, sell, prods) {
     tiktok: '🎵 TikTok',
     // tiktok_studio is hidden from UI but still generated for video
     instagram: '📷 Instagram',
-    canva: '🎨 Canvaサムネ',
+    canva: '🎨 noteサムネ',
     note: '📝 note記事'
   };
 
@@ -1394,10 +1393,36 @@ function renderResult(r, types, profit, roi, buy, sell, prods) {
 
     if (type === 'canva' && r.canva) {
       const cv = r.canva;
+      // Generate mosaic thumbnail from first product image
+      let thumbBg = '';
+      if (prods) {
+        const pImg = prods.find(p => p.files && p.files.some(f => f.type.startsWith('image/')));
+        if (pImg) {
+          const imgFile = pImg.files.find(f => f.type.startsWith('image/'));
+          if (imgFile) {
+            const thumbCanvas = document.createElement('canvas');
+            thumbCanvas.width = 400; thumbCanvas.height = 240;
+            const tCtx = thumbCanvas.getContext('2d');
+            const tImg = await loadImageFile(imgFile);
+            const sc = Math.max(400 / tImg.width, 240 / tImg.height);
+            tCtx.drawImage(tImg, (400 - tImg.width * sc) / 2, (240 - tImg.height * sc) / 2, tImg.width * sc, tImg.height * sc);
+            // Mosaic
+            tCtx.imageSmoothingEnabled = false;
+            const tmpC = document.createElement('canvas');
+            tmpC.width = 20; tmpC.height = 12;
+            tmpC.getContext('2d').drawImage(thumbCanvas, 0, 0, 20, 12);
+            tCtx.drawImage(tmpC, 0, 0, 400, 240);
+            tCtx.imageSmoothingEnabled = true;
+            tCtx.fillStyle = 'rgba(0,0,0,0.5)';
+            tCtx.fillRect(0, 0, 400, 240);
+            thumbBg = `background-image:url(${thumbCanvas.toDataURL('image/jpeg',0.7)});background-size:cover;background-position:center;`;
+          }
+        }
+      }
       pane.innerHTML = `
         <div class="result-block">
           <div class="result-block-head"><span class="result-block-label">🖼️ プレビュー</span></div>
-          <div class="canva-preview">
+          <div class="canva-preview" style="${thumbBg}">
             <div class="canva-badge">${cv.price_badge}</div>
             <div class="canva-main">${cv.main}</div>
             <div class="canva-sub">${cv.sub}</div>
@@ -1681,6 +1706,14 @@ async function generateVideo() {
     btn.textContent = '🎬 動画を生成する';
     btn.disabled = false;
   }
+}
+
+function loadImageFile(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 function loadImage(file) {
