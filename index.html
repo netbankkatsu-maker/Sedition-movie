@@ -1069,7 +1069,9 @@ async function scanProduct(idx) {
   } catch (e) {
     btn.textContent = '📷 写真から商品名を読み取る';
     btn.disabled = false;
-    alert('読み取りエラー: ' + e.message);
+    const errDiv = document.getElementById('errorMsg');
+    errDiv.textContent = '⚠️ 読み取りエラー: ' + e.message;
+    errDiv.style.display = 'block';
   }
 }
 
