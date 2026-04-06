@@ -30,30 +30,11 @@ export default async function handler(req, res) {
     }
   }
 
-  const { captions, hook, priceBadge, imageData } = req.body;
+  const { captions, hook, priceBadge, imageUrl: clientImageUrl } = req.body;
 
   try {
-    // Upload image to Shotstack if provided
-    let imageUrl = null;
-    if (imageData) {
-      try {
-        const uploadResp = await fetch('https://api.shotstack.io/stage/assets', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey
-          },
-          body: JSON.stringify({ url: imageData })
-        });
-        if (uploadResp.ok) {
-          const uploadData = await uploadResp.json();
-          // Use the Shotstack-hosted URL
-          imageUrl = uploadData.data?.attributes?.url || null;
-        }
-      } catch (e) {
-        // If upload fails, continue without image
-      }
-    }
+    // Use the image URL provided by client (uploaded via /api/upload)
+    const imageUrl = clientImageUrl || null;
 
     // Build subtitle clips using title assets (reliable Japanese text rendering)
     const subtitleClips = (captions || []).map(c => {
@@ -123,19 +104,11 @@ export default async function handler(req, res) {
       transition: { in: 'fade' }
     };
 
-    // Background
+    // Background (Shotstack only accepts http/https URLs, not data URLs)
     let bgClip;
-    if (imageUrl) {
+    if (imageUrl && imageUrl.startsWith('http')) {
       bgClip = {
         asset: { type: 'image', src: imageUrl },
-        start: 0,
-        length: 30,
-        fit: 'cover'
-      };
-    } else if (imageData && imageData.startsWith('data:')) {
-      // Try using data URL directly
-      bgClip = {
-        asset: { type: 'image', src: imageData },
         start: 0,
         length: 30,
         fit: 'cover'

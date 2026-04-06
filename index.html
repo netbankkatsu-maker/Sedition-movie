@@ -1466,20 +1466,29 @@ async function generateVideo() {
     const r = window._lastResult;
     const prods = window._lastProducts || [];
 
-    // 商品画像を圧縮してBase64に変換
-    let imageData = null;
+    // 商品画像をアップロードしてURL取得
+    let imageUrl = null;
     const prodWithImage = prods.find(p => p.files && p.files.some(f => f.type.startsWith('image/')));
     if (prodWithImage) {
+      btn.textContent = '⏳ 画像をアップロード中…';
       const imgFile = prodWithImage.files.find(f => f.type.startsWith('image/'));
-      imageData = await compressImage(imgFile, 540, 960, 0.6);
+      const imageData = await compressImage(imgFile, 540, 960, 0.6);
+      const uploadRes = await fetch(window.location.origin + '/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: imageData })
+      });
+      const uploadData = await uploadRes.json();
+      if (uploadData.url) imageUrl = uploadData.url;
     }
 
+    btn.textContent = '⏳ 動画を生成中…';
     const payload = {
       action: 'render',
       captions: r.tiktok_studio.captions,
       hook: r.tiktok.hook,
       priceBadge: r.canva.price_badge,
-      imageData
+      imageUrl
     };
 
     // Start render
