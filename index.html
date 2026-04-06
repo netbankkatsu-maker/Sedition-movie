@@ -1338,7 +1338,8 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
     note: '📝 note記事'
   };
 
-  types.forEach((type, i) => {
+  for (let i = 0; i < types.length; i++) {
+    const type = types[i];
     // tab
     const tab = document.createElement('button');
     tab.className = 'tab-btn' + (i === 0 ? ' active' : '');
@@ -1403,7 +1404,7 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
             const thumbCanvas = document.createElement('canvas');
             thumbCanvas.width = 400; thumbCanvas.height = 240;
             const tCtx = thumbCanvas.getContext('2d');
-            const tImg = await loadImageFile(imgFile);
+            const tImg = await loadImage(imgFile);
             const sc = Math.max(400 / tImg.width, 240 / tImg.height);
             tCtx.drawImage(tImg, (400 - tImg.width * sc) / 2, (240 - tImg.height * sc) / 2, tImg.width * sc, tImg.height * sc);
             // Blur
@@ -1451,7 +1452,7 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
     }
 
     panesEl.appendChild(pane);
-  });
+  }
 
   // Video generation area
   const videoArea = document.getElementById('videoArea');
@@ -1580,6 +1581,21 @@ async function generateVideo() {
     const fps = 25;
     const totalFrames = totalDuration * fps;
 
+    // Helper: draw outlined text with glow + pop animation
+    const drawText = (text, x, y, color, fontSize, maxW, lineH, popProgress) => {
+      const scale = popProgress !== undefined ? Math.min(popProgress * 1.2, 1) * (popProgress < 0.3 ? 0.8 + popProgress * 0.67 : 1) : 1;
+      ctx.save();
+      if (scale !== 1) { ctx.translate(x, y); ctx.scale(scale, scale); ctx.translate(-x, -y); }
+      ctx.font = `900 ${fontSize}px "Hiragino Sans", "Yu Gothic", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.shadowColor = color; ctx.shadowBlur = 16;
+      ctx.strokeStyle = 'rgba(0,0,0,0.9)'; ctx.lineWidth = 6; ctx.lineJoin = 'round';
+      wrapTextStroke(ctx, text, x, y, maxW, lineH);
+      ctx.fillStyle = color; ctx.shadowBlur = 0;
+      wrapText(ctx, text, x, y, maxW, lineH);
+      ctx.restore();
+    };
+
     for (let frame = 0; frame < totalFrames; frame++) {
       const t = frame / fps; // current time in seconds
 
@@ -1609,32 +1625,6 @@ async function generateVideo() {
       // Dark overlay
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
       ctx.fillRect(0, 0, W, H);
-
-      // Helper: draw outlined text (stroke + fill + glow)
-      function drawText(text, x, y, color, fontSize, maxW, lineH, popProgress) {
-        const scale = popProgress !== undefined ? Math.min(popProgress * 1.2, 1) * (popProgress < 0.3 ? 0.8 + popProgress * 0.67 : 1) : 1;
-        ctx.save();
-        if (scale !== 1) {
-          ctx.translate(x, y);
-          ctx.scale(scale, scale);
-          ctx.translate(-x, -y);
-        }
-        ctx.font = `900 ${fontSize}px "Hiragino Sans", "Yu Gothic", sans-serif`;
-        ctx.textAlign = 'center';
-        // Glow
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 16;
-        // Outline
-        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.lineWidth = 6;
-        ctx.lineJoin = 'round';
-        wrapTextStroke(ctx, text, x, y, maxW, lineH);
-        // Fill
-        ctx.fillStyle = color;
-        ctx.shadowBlur = 0;
-        wrapText(ctx, text, x, y, maxW, lineH);
-        ctx.restore();
-      }
 
       // Hook text (0-3 seconds) — pop-up animation
       if (t < 3) {
@@ -1725,14 +1715,6 @@ async function generateVideo() {
     btn.textContent = '🎬 動画を生成する';
     btn.disabled = false;
   }
-}
-
-function loadImageFile(file) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.src = URL.createObjectURL(file);
-  });
 }
 
 function loadImage(file) {
