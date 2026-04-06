@@ -1406,14 +1406,11 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
             const tImg = await loadImageFile(imgFile);
             const sc = Math.max(400 / tImg.width, 240 / tImg.height);
             tCtx.drawImage(tImg, (400 - tImg.width * sc) / 2, (240 - tImg.height * sc) / 2, tImg.width * sc, tImg.height * sc);
-            // Mosaic
-            tCtx.imageSmoothingEnabled = false;
-            const tmpC = document.createElement('canvas');
-            tmpC.width = 20; tmpC.height = 12;
-            tmpC.getContext('2d').drawImage(thumbCanvas, 0, 0, 20, 12);
-            tCtx.drawImage(tmpC, 0, 0, 400, 240);
-            tCtx.imageSmoothingEnabled = true;
-            tCtx.fillStyle = 'rgba(0,0,0,0.5)';
+            // Blur
+            tCtx.filter = 'blur(12px)';
+            tCtx.drawImage(thumbCanvas, 0, 0);
+            tCtx.filter = 'none';
+            tCtx.fillStyle = 'rgba(0,0,0,0.45)';
             tCtx.fillRect(0, 0, 400, 240);
             thumbBg = `background-image:url(${thumbCanvas.toDataURL('image/jpeg',0.7)});background-size:cover;background-position:center;`;
           }
@@ -1592,17 +1589,12 @@ async function generateVideo() {
         const w = bgImage.width * scale;
         const h = bgImage.height * scale;
         ctx.drawImage(bgImage, (W - w) / 2, (H - h) / 2, w, h);
-        // Mosaic effect
-        const mosaicSize = 18;
-        ctx.imageSmoothingEnabled = false;
-        const tempC = document.createElement('canvas');
-        tempC.width = Math.ceil(W / mosaicSize);
-        tempC.height = Math.ceil(H / mosaicSize);
-        tempC.getContext('2d').drawImage(canvas, 0, 0, tempC.width, tempC.height);
-        ctx.drawImage(tempC, 0, 0, W, H);
-        ctx.imageSmoothingEnabled = true;
+        // Blur effect
+        ctx.filter = 'blur(20px)';
+        ctx.drawImage(canvas, 0, 0);
+        ctx.filter = 'none';
         // Dark overlay
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.fillRect(0, 0, W, H);
       } else {
         // Gradient background
