@@ -813,8 +813,8 @@ html, body {
 <div class="page active" id="page0">
 
   <div class="sec-label" style="margin-top:4px;">📸 商品写真を追加（2枚で1商品）</div>
-  <div class="upload-box" id="globalUploadBox">
-    <input type="file" id="globalFileInput" accept="image/*" multiple style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;">
+  <input type="file" id="globalFileInput" accept="image/*" multiple style="display:none;">
+  <div class="upload-box" id="globalUploadBox" onclick="document.getElementById('globalFileInput').click()">
     <div class="upload-emoji">📁</div>
     <div class="upload-title">タップして写真を選択</div>
     <div class="upload-sub">2枚ずつ自動で商品分け（最大6枚）</div>
@@ -1101,6 +1101,11 @@ renderProductTabs();
 renderProductForm(0);
 
 // ── global file input (top-level photo upload) ──
+// Also add touchend handler for Safari
+document.getElementById('globalUploadBox').addEventListener('touchend', e => {
+  e.preventDefault();
+  document.getElementById('globalFileInput').click();
+});
 document.getElementById('globalFileInput').addEventListener('change', e => {
   const newFiles = [...e.target.files].filter(f => f.type.startsWith('image/'));
   if (!newFiles.length) return;
