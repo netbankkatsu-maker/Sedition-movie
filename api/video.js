@@ -142,7 +142,7 @@ export default async function handler(req, res) {
 
     const data = await resp.json();
     if (!resp.ok) {
-      return res.status(resp.status).json(data);
+      return res.status(resp.status).json({ error: `Shotstack error: ${JSON.stringify(data)}` });
     }
 
     return res.status(200).json({ renderId: data.response?.id });

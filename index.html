@@ -1271,9 +1271,9 @@ function renderResult(r, types, profit, roi, buy, sell, prods) {
         <div class="result-block">
           <div class="result-block-head">
             <span class="result-block-label">#️⃣ ハッシュタグ</span>
-            <button class="copy-pill" onclick="cp(this, '${esc(t.hashtags.map(h=>'#'+h).join(' '))}')">全コピー</button>
+            <button class="copy-pill" onclick="cp(this, '${esc(t.hashtags.map(h=>'#'+h.replace(/^#/,'')).join(' '))}')">全コピー</button>
           </div>
-          <div class="tag-wrap">${t.hashtags.map(h=>`<span class="tag" onclick="cp(this,'#${esc(h)}')">#${h}</span>`).join('')}</div>
+          <div class="tag-wrap">${t.hashtags.map(h=>{h=h.replace(/^#/,'');return`<span class="tag" onclick="cp(this,'#${esc(h)}')">#${h}</span>`;}).join('')}</div>
         </div>
       `;
     }
@@ -1311,7 +1311,7 @@ function renderResult(r, types, profit, roi, buy, sell, prods) {
         <div class="result-block">
           <div class="result-block-head">
             <span class="result-block-label">#️⃣ ハッシュタグ</span>
-            <button class="copy-pill" onclick="cp(this,'${esc(ig.hashtags.map(h=>'#'+h).join(' '))}')">全コピー</button>
+            <button class="copy-pill" onclick="cp(this,'${esc(ig.hashtags.map(h=>'#'+h.replace(/^#/,'')).join(' '))}')">全コピー</button>
           </div>
           <div class="tag-wrap">${ig.hashtags.map(h=>`<span class="tag" onclick="cp(this,'#${esc(h)}')">#${h}</span>`).join('')}</div>
         </div>
@@ -1393,20 +1393,13 @@ async function generateVideo() {
     const r = window._lastResult;
     const prods = window._lastProducts || [];
 
-    // Get mosaic image URL from first product with images
-    let imageUrl = null;
-    const prodWithImage = prods.find(p => p.files && p.files.some(f => f.type.startsWith('image/')));
-    if (prodWithImage) {
-      const imgFile = prodWithImage.files.find(f => f.type.startsWith('image/'));
-      imageUrl = await mosaicAndUpload(imgFile);
-    }
-
+    // 画像はBase64だとリクエストが大きすぎるためグラデーション背景を使用
     const payload = {
       action: 'render',
       captions: r.tiktok_studio.captions,
       hook: r.tiktok.hook,
       priceBadge: r.canva.price_badge,
-      imageUrl
+      imageUrl: null
     };
 
     // Start render
