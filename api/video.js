@@ -51,9 +51,8 @@ export default async function handler(req, res) {
   // Start render
   const { captions, hook, priceBadge, imageUrl } = req.body;
 
-  // Google Fonts import for Japanese text
-  const fontLink = '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">';
-  const fontStyle = "font-family:'Noto Sans JP',sans-serif;";
+  // Google Fonts via @import + charset for Japanese
+  const htmlHead = `<meta charset="utf-8"><style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=block');*{font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif;}</style>`;
 
   try {
     const subtitleClips = (captions || []).map(c => {
@@ -63,7 +62,7 @@ export default async function handler(req, res) {
       return {
         asset: {
           type: 'html',
-          html: `<html><head>${fontLink}</head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;"><div style="${fontStyle}font-size:48px;font-weight:900;color:white;text-shadow:2px 2px 8px rgba(0,0,0,0.8),0 0 20px rgba(0,0,0,0.6);text-align:center;padding:20px;line-height:1.4;">${escHtml(c.text)}</div></body></html>`,
+          html: `<html><head>${htmlHead}</head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;"><div style="font-size:48px;font-weight:900;color:white;text-shadow:2px 2px 8px rgba(0,0,0,0.8),0 0 20px rgba(0,0,0,0.6);text-align:center;padding:20px;line-height:1.4;">${escHtml(c.text)}</div></body></html>`,
           width: 1080,
           height: 250
         },
@@ -78,7 +77,7 @@ export default async function handler(req, res) {
     const hookClip = hook ? {
       asset: {
         type: 'html',
-        html: `<html><head>${fontLink}</head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;"><div style="${fontStyle}font-size:72px;font-weight:900;color:#ff6b35;text-shadow:3px 3px 12px rgba(0,0,0,0.9);text-align:center;padding:20px;line-height:1.3;">${escHtml(hook)}</div></body></html>`,
+        html: `<html><head>${htmlHead}</head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;"><div style="font-size:72px;font-weight:900;color:#ff6b35;text-shadow:3px 3px 12px rgba(0,0,0,0.9);text-align:center;padding:20px;line-height:1.3;">${escHtml(hook)}</div></body></html>`,
         width: 1080,
         height: 400
       },
@@ -91,7 +90,7 @@ export default async function handler(req, res) {
     const badgeClip = priceBadge ? {
       asset: {
         type: 'html',
-        html: `<html><head>${fontLink}</head><body style="margin:0;display:flex;align-items:flex-start;justify-content:flex-end;padding:20px;"><div style="${fontStyle}font-size:36px;font-weight:900;color:white;background:#ff6b35;padding:12px 24px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.4);">${escHtml(priceBadge)}</div></body></html>`,
+        html: `<html><head>${htmlHead}</head><body style="margin:0;display:flex;align-items:flex-start;justify-content:flex-end;padding:20px;"><div style="font-size:36px;font-weight:900;color:white;background:#ff6b35;padding:12px 24px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.4);">${escHtml(priceBadge)}</div></body></html>`,
         width: 1080,
         height: 120
       },
@@ -103,7 +102,7 @@ export default async function handler(req, res) {
     const ctaClip = {
       asset: {
         type: 'html',
-        html: `<html><head>${fontLink}</head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;"><div style="${fontStyle}font-size:44px;font-weight:900;color:#ffc844;text-shadow:2px 2px 8px rgba(0,0,0,0.8);text-align:center;padding:20px;">noteで利益商品を発信中！</div></body></html>`,
+        html: `<html><head>${htmlHead}</head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;"><div style="font-size:44px;font-weight:900;color:#ffc844;text-shadow:2px 2px 8px rgba(0,0,0,0.8);text-align:center;padding:20px;">noteで利益商品を発信中！</div></body></html>`,
         width: 1080,
         height: 250
       },
