@@ -812,7 +812,17 @@ html, body {
 <!-- ══ PAGE 0: 商品情報 ══ -->
 <div class="page active" id="page0">
 
-  <div class="product-tabs" id="productTabs"></div>
+  <div class="sec-label" style="margin-top:4px;">📸 商品写真を追加（2枚で1商品）</div>
+  <input type="file" id="globalFileInput" accept="image/*" multiple style="display:none">
+  <div class="upload-box" id="globalUploadBox" onclick="document.getElementById('globalFileInput').click()">
+    <div class="upload-emoji">📁</div>
+    <div class="upload-title">タップして写真を選択</div>
+    <div class="upload-sub">2枚ずつ自動で商品分け（最大6枚）</div>
+  </div>
+  <div class="thumb-row" id="globalThumbRow"></div>
+  <button class="scan-btn" id="globalScanBtn" onclick="scanAllProducts()" style="display:none;">📷 写真から商品名を読み取る</button>
+
+  <div class="product-tabs" id="productTabs" style="margin-top:16px;"></div>
   <div id="productForms"></div>
   <button class="add-product-btn" id="addProductBtn" onclick="addProduct()">＋ 商品を追加</button>
 
@@ -972,7 +982,7 @@ function renderProductForm(idx) {
       </div>
       <div class="thumb-row p-thumbs"></div>
 
-      <button class="scan-btn" onclick="scanProduct(${idx})">📷 写真から商品名を読み取る</button>
+      <button class="scan-btn" onclick="scanAllProducts()">📷 写真から商品名を読み取る</button>
 
       <div class="sec-label">💰 商品情報</div>
       <div class="input-card">
@@ -1025,72 +1035,76 @@ function addFileToProduct(idx, f) {
 }
 
 // ── scan product from photo ──
-async function scanProduct(idx) {
-  const p = products[idx];
-  const imgFile = p.files.find(f => f.type.startsWith('image/'));
-  if (!imgFile) { alert('先に写真を追加してください'); return; }
+async function scanVision(imgFile) {
+  const base64 = await compressImage(imgFile, 800, 800, 0.7);
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+  if (isLocal) {
+    const localKey = getApiKey();
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localKey}` },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        messages: [{ role: 'user', content: [
+          { type: 'text', text: '商品画像から商品名・型番・カテゴリを読み取ってJSONで返して。{"productName":"","modelNumber":"","category":"おもちゃ・ゲーム/家電・スマホ/ブランド品/本・CD・DVD/スポーツ用品/食品・飲料/その他のいずれか"}' },
+          { type: 'image_url', image_url: { url: base64 } }
+        ]}],
+        temperature: 0.3, max_tokens: 300
+      })
+    });
+    const data = await res.json();
+    const text = (data.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
+    return JSON.parse(text);
+  } else {
+    const res = await fetch(window.location.origin + '/api/vision', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: base64 })
+    });
+    const result = await res.json();
+    if (result.error) throw new Error(result.error);
+    return result;
+  }
+}
 
+async function scanAllProducts() {
   const btn = document.querySelector('.scan-btn');
   btn.disabled = true;
-  btn.textContent = '📷 読み取り中…';
 
   try {
-    // Compress image before sending (max 800px, quality 0.7)
-    const base64 = await compressImage(imgFile, 800, 800, 0.7);
-
-    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
-    let result;
-
-    if (isLocal) {
-      const localKey = getApiKey();
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localKey}` },
-        body: JSON.stringify({
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-          messages: [{ role: 'user', content: [
-            { type: 'text', text: '商品画像から商品名・型番・カテゴリを読み取ってJSONで返して。{"productName":"","modelNumber":"","category":"おもちゃ・ゲーム/家電・スマホ/ブランド品/本・CD・DVD/スポーツ用品/食品・飲料/その他のいずれか"}' },
-            { type: 'image_url', image_url: { url: base64 } }
-          ]}],
-          temperature: 0.3, max_tokens: 300
-        })
-      });
-      const data = await res.json();
-      const text = (data.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
-      result = JSON.parse(text);
-    } else {
-      const apiUrl = window.location.origin + '/api/vision';
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64 })
-      });
-      result = await res.json();
-      if (result.error) throw new Error(result.error);
-    }
-
-    // Fill form
-    const form = document.getElementById('productForm-' + idx);
-    if (result.productName) {
-      const modelStr = result.modelNumber ? ' ' + result.modelNumber : '';
-      form.querySelector('.p-name').value = result.productName + modelStr;
-    }
-    if (result.category) {
-      const sel = form.querySelector('.p-cat');
-      const opts = [...sel.options].map(o => o.value);
-      if (opts.includes(result.category)) sel.value = result.category;
-    }
     saveCurrentProduct();
+    const prodsWithImages = products.map((p, i) => ({ idx: i, img: p.files.find(f => f.type.startsWith('image/')) })).filter(x => x.img);
+    if (!prodsWithImages.length) { alert('先に写真を追加してください'); btn.disabled = false; return; }
 
-    btn.textContent = '✓ 読み取り完了';
-    btn.classList.add('done');
-    setTimeout(() => { btn.textContent = '📷 写真から商品名を読み取る'; btn.classList.remove('done'); btn.disabled = false; }, 3000);
+    for (let i = 0; i < prodsWithImages.length; i++) {
+      const { idx, img } = prodsWithImages[i];
+      btn.textContent = `📷 読み取り中… (${i + 1}/${prodsWithImages.length})`;
+
+      const result = await scanVision(img);
+
+      if (result.productName) {
+        const modelStr = result.modelNumber ? ' ' + result.modelNumber : '';
+        products[idx].name = result.productName + modelStr;
+      }
+      if (result.category) products[idx].category = result.category;
+    }
+
+    // Re-render current form with updated data
+    renderProductTabs();
+    renderProductForm(activeProductIdx);
+
+    const btn2 = document.querySelector('.scan-btn');
+    if (btn2) {
+      btn2.textContent = '✓ 全商品読み取り完了';
+      btn2.classList.add('done');
+      setTimeout(() => { btn2.textContent = '📷 写真から商品名を読み取る'; btn2.classList.remove('done'); btn2.disabled = false; }, 3000);
+    }
   } catch (e) {
-    btn.textContent = '📷 写真から商品名を読み取る';
-    btn.disabled = false;
     const errDiv = document.getElementById('errorMsg');
     errDiv.textContent = '⚠️ 読み取りエラー: ' + e.message;
     errDiv.style.display = 'block';
+    const b = document.querySelector('.scan-btn');
+    if (b) { b.textContent = '📷 写真から商品名を読み取る'; b.disabled = false; }
   }
 }
 
@@ -1147,6 +1161,57 @@ function removeProduct(idx) {
 products.push(createProductData());
 renderProductTabs();
 renderProductForm(0);
+
+// ── global file input (top-level photo upload) ──
+document.getElementById('globalFileInput').addEventListener('change', e => {
+  const newFiles = [...e.target.files].filter(f => f.type.startsWith('image/'));
+  if (!newFiles.length) return;
+
+  // Distribute files: 2 per product
+  for (const f of newFiles) {
+    // Find or create a product with < 2 images
+    let targetIdx = products.findIndex(p => p.files.filter(x => x.type.startsWith('image/')).length < 2);
+    if (targetIdx === -1 && products.length < 3) {
+      products.push(createProductData());
+      targetIdx = products.length - 1;
+    }
+    if (targetIdx === -1) break; // max 3 products reached
+    products[targetIdx].files.push(f);
+  }
+
+  activeProductIdx = 0;
+  renderProductTabs();
+  renderProductForm(activeProductIdx);
+  renderGlobalThumbs();
+  document.getElementById('globalFileInput').value = '';
+});
+
+function renderGlobalThumbs() {
+  const row = document.getElementById('globalThumbRow');
+  row.innerHTML = '';
+  const allImages = [];
+  products.forEach((p, pi) => {
+    p.files.filter(f => f.type.startsWith('image/')).forEach((f, fi) => {
+      allImages.push({ f, pi, fi });
+    });
+  });
+  document.getElementById('globalUploadBox').classList.toggle('has-files', allImages.length > 0);
+  document.getElementById('globalScanBtn').style.display = allImages.length > 0 ? 'flex' : 'none';
+
+  allImages.forEach(({ f, pi }, i) => {
+    const div = document.createElement('div');
+    div.className = 'thumb';
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    div.appendChild(img);
+    // Product number label
+    const label = document.createElement('div');
+    label.style.cssText = 'position:absolute;bottom:2px;left:2px;background:rgba(255,107,53,0.9);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;';
+    label.textContent = `商品${pi + 1}`;
+    div.appendChild(label);
+    row.appendChild(div);
+  });
+}
 
 // ── chips ──
 document.querySelectorAll('.chip').forEach(c => {
@@ -1621,7 +1686,11 @@ async function generateVideo() {
     // MediaRecorder setup
     const stream = canvas.captureStream(25);
     const chunks = [];
-    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 2500000 });
+    // Safari: mp4, Chrome/others: webm
+    const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
+      : MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8' : 'video/webm';
+    const fileExt = mimeType.includes('mp4') ? 'mp4' : 'webm';
+    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000 });
     recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
 
     const videoReady = new Promise(resolve => { recorder.onstop = () => resolve(); });
@@ -1817,18 +1886,19 @@ async function generateVideo() {
     recorder.stop();
     await videoReady;
 
-    const blob = new Blob(chunks, { type: 'video/webm' });
+    const blob = new Blob(chunks, { type: mimeType });
     const videoUrl = URL.createObjectURL(blob);
 
     resultDiv.innerHTML = `
       <div class="video-preview" style="margin-top:12px;">
         <video src="${videoUrl}" controls playsinline style="width:100%;max-height:400px;border-radius:12px;"></video>
       </div>
-      <a href="${videoUrl}" download="sedori-video.webm" class="video-download-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">
+      <a href="${videoUrl}" download="sedori-video.${fileExt}" class="video-download-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">
         📥 動画をダウンロード
       </a>
     `;
-    btn.textContent = '✓ 生成完了';
+    btn.textContent = '🔄 再生成する';
+    btn.disabled = false;
   } catch (e) {
     resultDiv.innerHTML = `<p style="font-size:12px;color:#ff6060;margin-top:12px;">⚠️ ${e.message}</p>`;
     btn.textContent = '🎬 動画を生成する';
