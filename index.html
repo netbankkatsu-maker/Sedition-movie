@@ -826,7 +826,6 @@ html, body {
   <div class="sec-label">📲 生成するコンテンツ</div>
   <div class="chips">
     <div class="chip on" data-type="tiktok"><span class="chip-icon">🎵</span>TikTok</div>
-    <div class="chip on" data-type="tiktok_studio"><span class="chip-icon">🎬</span>TikTok Studio字幕</div>
     <div class="chip on" data-type="instagram"><span class="chip-icon">📷</span>Instagram</div>
     <div class="chip on" data-type="canva"><span class="chip-icon">🎨</span>Canvaサムネ</div>
     <div class="chip on" data-type="note"><span class="chip-icon">📝</span>有料note</div>
@@ -1237,7 +1236,7 @@ function renderResult(r, types, profit, roi, buy, sell, prods) {
 
   const labels = {
     tiktok: '🎵 TikTok',
-    tiktok_studio: '🎬 Studio字幕',
+    // tiktok_studio is hidden from UI but still generated for video
     instagram: '📷 Instagram',
     canva: '🎨 Canvaサムネ',
     note: '📝 note記事'
@@ -1278,30 +1277,8 @@ function renderResult(r, types, profit, roi, buy, sell, prods) {
       `;
     }
 
-    if (type === 'tiktok_studio' && r.tiktok_studio) {
-      const ts = r.tiktok_studio;
-      const rows = ts.captions.map(c => `
-        <div class="tl-item">
-          <div class="tl-time">${c.start}<br>${c.end}</div>
-          <div style="flex:1;">
-            <div class="tl-text">${c.text}</div>
-            <div class="tl-style">${c.style}</div>
-          </div>
-          <button class="tl-copy" onclick="cp(this,'${esc(c.text)}')">📋</button>
-        </div>
-      `).join('');
-      pane.innerHTML = `
-        <div class="result-block">
-          <div class="result-block-head">
-            <span class="result-block-label">🎬 字幕タイムライン</span>
-            <button class="copy-pill" onclick="cp(this,'${esc(ts.captions.map(c=>c.text).join('\n'))}')">全コピー</button>
-          </div>
-          ${rows}
-        </div>
-        ${block('🎵 BGMの雰囲気', ts.bgm_mood, '')}
-        ${block('💡 編集ポイント', ts.edit_tips, '')}
-      `;
-    }
+    // tiktok_studio: UIには表示しない（動画生成で内部使用）
+    if (type === 'tiktok_studio') { pane.remove(); return; }
 
     if (type === 'instagram' && r.instagram) {
       const ig = r.instagram;
@@ -1332,9 +1309,6 @@ function renderResult(r, types, profit, roi, buy, sell, prods) {
         ${block('✏️ メインテキスト', cv.main, 'large')}
         ${block('✏️ サブテキスト', cv.sub, '')}
         ${block('💰 価格バッジ', cv.price_badge, 'gold')}
-        ${block('🎨 カラーテーマ', cv.color, '')}
-        ${block('📐 配置アドバイス', cv.layout_tip, '')}
-        ${block('📲 ストーリーズオーバーレイ', cv.story_overlay, 'large accent')}
       `;
     }
 
