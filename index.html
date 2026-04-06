@@ -1173,9 +1173,10 @@ ${noteInstruction}${multiProductNote}
       if (!res.ok) throw new Error(`APIエラー ${res.status}: ${JSON.stringify(data)}`);
       raw = (data.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
     } else {
-      const headers = { 'Content-Type': 'application/json' };
-      if (localKey) headers['x-api-key'] = localKey;
-      const res = await fetch('/api/generate', { method: 'POST', headers, body: JSON.stringify({ prompt }) });
+      const fetchHeaders = { 'Content-Type': 'application/json' };
+      if (localKey) fetchHeaders['x-api-key'] = localKey;
+      const apiUrl = window.location.origin + '/api/generate';
+      const res = await fetch(apiUrl, { method: 'POST', headers: fetchHeaders, body: JSON.stringify({ prompt }) });
       const data = await res.json();
       if (!res.ok) throw new Error(`APIエラー ${res.status}: ${JSON.stringify(data)}`);
       raw = (data.text || '').replace(/```json|```/g, '').trim();
