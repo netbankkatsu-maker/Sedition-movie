@@ -543,6 +543,89 @@ html, body {
   font-weight: 700;
   cursor: pointer;
 }
+
+/* ── API KEY MODAL ── */
+.api-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(13,13,20,0.95);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.api-modal.hidden { display: none; }
+.api-modal-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 20px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+}
+.api-modal-card h2 {
+  font-size: 18px;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+.api-modal-card p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.api-modal-card input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  margin-bottom: 14px;
+}
+.api-modal-card input:focus {
+  border-color: var(--accent);
+}
+.api-modal-card .api-save-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 100px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.api-modal-card .api-save-btn:disabled {
+  opacity: 0.4;
+}
+.api-key-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,214,143,0.1);
+  border: 1px solid rgba(0,214,143,0.3);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+.api-key-badge.not-set {
+  background: rgba(255,60,60,0.1);
+  border-color: rgba(255,60,60,0.3);
+  color: #ff6060;
+}
 </style>
 </head>
 <body>
@@ -552,6 +635,7 @@ html, body {
   <div class="header-icon">🏷️</div>
   <h1>せどりAI</h1>
   <div class="header-badge">AUTO</div>
+  <div class="api-key-badge not-set" id="apiKeyBadge" onclick="showApiModal()">🔑 未設定</div>
 </div>
 
 <!-- PROGRESS -->
@@ -666,6 +750,19 @@ html, body {
   ⚡ AIでコンテンツを生成
 </button>
 
+<!-- API KEY MODAL -->
+<div class="api-modal hidden" id="apiModal">
+  <div class="api-modal-card">
+    <h2>🔑 APIキー設定</h2>
+    <p>Anthropic APIキーを入力してください。<br>端末に保存され、外部には送信されません。</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+    <button class="api-save-btn" id="apiSaveBtn" onclick="saveApiKey()">保存する</button>
+    <p style="margin-top:14px;margin-bottom:0;font-size:11px;">
+      Vercelデプロイ時は環境変数に設定すれば<br>この入力は不要です
+    </p>
+  </div>
+</div>
+
 <!-- LOADING -->
 <div class="loading" id="loading">
   <div class="spinner"></div>
@@ -678,6 +775,35 @@ html, body {
 let files = [];
 let currentPage = 0;
 let result = null;
+
+// ── API key management ──
+function getApiKey() {
+  return localStorage.getItem('sedori_api_key') || '';
+}
+function showApiModal() {
+  document.getElementById('apiKeyInput').value = getApiKey();
+  document.getElementById('apiModal').classList.remove('hidden');
+}
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (key) {
+    localStorage.setItem('sedori_api_key', key);
+    document.getElementById('apiModal').classList.add('hidden');
+    updateApiKeyBadge();
+  }
+}
+function updateApiKeyBadge() {
+  const badge = document.getElementById('apiKeyBadge');
+  if (getApiKey()) {
+    badge.textContent = '🔑 設定済み';
+    badge.classList.remove('not-set');
+  } else {
+    badge.textContent = '🔑 未設定';
+    badge.classList.add('not-set');
+  }
+}
+// init badge on load
+updateApiKeyBadge();
 
 // ── chips ──
 document.querySelectorAll('.chip').forEach(c => {
@@ -764,6 +890,13 @@ async function generate() {
   const types = [...document.querySelectorAll('.chip.on')].map(c => c.dataset.type);
   if (!types.length) { alert('コンテンツを1つ以上選択してください'); return; }
 
+  // Vercelデプロイでなければローカルキーが必要
+  const isDeployed = !(location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:');
+  if (!isDeployed && !getApiKey()) {
+    showApiModal();
+    return;
+  }
+
   const profit = parseInt(sell) - parseInt(buy);
   const roi = Math.round(profit / parseInt(buy) * 100);
 
@@ -841,9 +974,24 @@ ${noteInstruction}
 日本語・せどり初〜中級者向け・リアルで共感しやすいトーンで。`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    // Vercelデプロイ時は /api/generate を使用（環境変数でAPIキー管理）
+    // ローカルテスト時はlocalStorageのAPIキーで直接呼び出し
+    const localKey = getApiKey();
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+    const useDirectApi = isLocal && localKey;
+
+    const endpoint = useDirectApi ? 'https://api.anthropic.com/v1/messages' : '/api/generate';
+    const headers = { 'Content-Type': 'application/json' };
+    if (useDirectApi) {
+      headers['x-api-key'] = localKey;
+      headers['anthropic-version'] = '2023-06-01';
+    } else if (localKey) {
+      headers['x-api-key'] = localKey;
+    }
+
+    const res = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
