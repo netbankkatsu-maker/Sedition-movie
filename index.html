@@ -1500,6 +1500,16 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
         </div>
 
         <div style="margin-bottom:12px;">
+          <label style="font-size:11px;color:var(--muted);font-weight:700;">背景ぼかし</label>
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button class="vid-blur-btn" data-blur="8" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">弱</button>
+            <button class="vid-blur-btn" data-blur="14" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">中</button>
+            <button class="vid-blur-btn active" data-blur="20" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--accent);background:rgba(255,107,53,0.1);color:var(--accent);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">強（推奨）</button>
+            <button class="vid-blur-btn" data-blur="30" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">最高</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
           <label style="font-size:11px;color:var(--muted);font-weight:700;">文字サイズ</label>
           <div style="display:flex;gap:6px;margin-top:4px;">
             <button class="vid-size-btn" data-size="small" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">小</button>
@@ -1515,21 +1525,25 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
       </div>
     `;
 
-    // Size button toggle
-    document.querySelectorAll('.vid-size-btn').forEach(b => {
-      b.addEventListener('click', () => {
-        document.querySelectorAll('.vid-size-btn').forEach(x => {
-          x.style.borderColor = 'var(--border)';
-          x.style.background = 'var(--card)';
-          x.style.color = 'var(--muted)';
+    // Toggle button helper
+    function setupToggle(selector, stateKey, defaultVal) {
+      document.querySelectorAll(selector).forEach(b => {
+        b.addEventListener('click', () => {
+          document.querySelectorAll(selector).forEach(x => {
+            x.style.borderColor = 'var(--border)';
+            x.style.background = 'var(--card)';
+            x.style.color = 'var(--muted)';
+          });
+          b.style.borderColor = 'var(--accent)';
+          b.style.background = 'rgba(255,107,53,0.1)';
+          b.style.color = 'var(--accent)';
+          window[stateKey] = b.dataset.blur || b.dataset.size;
         });
-        b.style.borderColor = 'var(--accent)';
-        b.style.background = 'rgba(255,107,53,0.1)';
-        b.style.color = 'var(--accent)';
-        window._vidFontSize = b.dataset.size;
       });
-    });
-    window._vidFontSize = 'medium';
+      window[stateKey] = defaultVal;
+    }
+    setupToggle('.vid-blur-btn', '_vidBlur', '20');
+    setupToggle('.vid-size-btn', '_vidFontSize', 'medium');
   }
 }
 
@@ -1618,9 +1632,11 @@ async function generateVideo() {
         const h = bgImage.height * scale;
         ctx.drawImage(bgImage, (W - w) / 2, (H - h) / 2, w, h);
         // Blur: shrink → stretch back (Safari compatible)
+        const blurLevel = parseInt(window._vidBlur || '20');
+        const blurDiv = Math.max(Math.ceil(blurLevel * 1.5), 4);
         const blurC = document.createElement('canvas');
-        blurC.width = Math.ceil(W / 12);
-        blurC.height = Math.ceil(H / 12);
+        blurC.width = Math.ceil(W / blurDiv);
+        blurC.height = Math.ceil(H / blurDiv);
         const blurCtx = blurC.getContext('2d');
         blurCtx.drawImage(canvas, 0, 0, blurC.width, blurC.height);
         ctx.imageSmoothingEnabled = true;
