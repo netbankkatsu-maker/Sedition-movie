@@ -1489,6 +1489,7 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
   }
 
   // Video generation area
+  // SRT export area
   const videoArea = document.getElementById('videoArea');
   if (r.tiktok_studio) {
     window._lastResult = r;
@@ -1504,16 +1505,14 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
 
     videoArea.innerHTML = `
       <div class="video-gen-area">
-        <div class="sec-label" style="margin-top:0;">🎬 動画を自動生成</div>
+        <div class="sec-label" style="margin-top:0;">🎬 CapCut用 字幕ファイル</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+          字幕を編集してSRTファイルをダウンロード →<br>CapCutで写真と合わせて動画にできます
+        </p>
 
         <div style="margin-bottom:10px;">
-          <label style="font-size:11px;color:var(--muted);font-weight:700;">フックテキスト（最初の3秒）</label>
+          <label style="font-size:11px;color:var(--muted);font-weight:700;">フック（最初の3秒）</label>
           <input type="text" id="vidHook" value="${esc2(r.tiktok.hook)}" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--accent);font-family:inherit;font-size:15px;font-weight:900;padding:10px;outline:none;margin-top:4px;">
-        </div>
-
-        <div style="margin-bottom:10px;">
-          <label style="font-size:11px;color:var(--muted);font-weight:700;">価格バッジ</label>
-          <input type="text" id="vidBadge" value="${esc2(r.canva.price_badge)}" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;padding:10px;outline:none;margin-top:4px;">
         </div>
 
         <div style="margin-bottom:10px;">
@@ -1523,393 +1522,71 @@ async function renderResult(r, types, profit, roi, buy, sell, prods) {
 
         <div style="margin-bottom:10px;">
           <label style="font-size:11px;color:var(--muted);font-weight:700;">CTA（最後の3秒）</label>
-          <input type="text" id="vidCta" value="詳しくはnoteで👇" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;padding:10px;outline:none;margin-top:4px;">
+          <input type="text" id="vidCta" value="詳しくはプロフのリンクから👇" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-family:inherit;font-size:14px;font-weight:700;padding:10px;outline:none;margin-top:4px;">
         </div>
 
-        <div style="margin-bottom:12px;">
-          <label style="font-size:11px;color:var(--muted);font-weight:700;">背景ぼかし</label>
-          <div style="display:flex;gap:6px;margin-top:4px;">
-            <button class="vid-blur-btn" data-blur="8" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">弱</button>
-            <button class="vid-blur-btn" data-blur="14" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">中</button>
-            <button class="vid-blur-btn active" data-blur="20" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--accent);background:rgba(255,107,53,0.1);color:var(--accent);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">強（推奨）</button>
-            <button class="vid-blur-btn" data-blur="30" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">最高</button>
-          </div>
-        </div>
-
-        <div style="margin-bottom:12px;">
-          <label style="font-size:11px;color:var(--muted);font-weight:700;">文字サイズ</label>
-          <div style="display:flex;gap:6px;margin-top:4px;">
-            <button class="vid-size-btn" data-size="small" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">小</button>
-            <button class="vid-size-btn active" data-size="medium" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--accent);background:rgba(255,107,53,0.1);color:var(--accent);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">中（推奨）</button>
-            <button class="vid-size-btn" data-size="large" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">大</button>
-          </div>
-        </div>
-
-        <button class="video-gen-btn" id="videoGenBtn" onclick="generateVideo()">
-          🎬 動画を生成する
+        <button class="video-gen-btn" onclick="downloadSRT()">
+          📥 SRT字幕ファイルをダウンロード
         </button>
-        <div id="videoResult"></div>
       </div>
     `;
-
-    // Toggle button helper
-    function setupToggle(selector, stateKey, defaultVal) {
-      document.querySelectorAll(selector).forEach(b => {
-        b.addEventListener('click', () => {
-          document.querySelectorAll(selector).forEach(x => {
-            x.style.borderColor = 'var(--border)';
-            x.style.background = 'var(--card)';
-            x.style.color = 'var(--muted)';
-          });
-          b.style.borderColor = 'var(--accent)';
-          b.style.background = 'rgba(255,107,53,0.1)';
-          b.style.color = 'var(--accent)';
-          window[stateKey] = b.dataset.blur || b.dataset.size;
-        });
-      });
-      window[stateKey] = defaultVal;
-    }
-    setupToggle('.vid-blur-btn', '_vidBlur', '20');
-    setupToggle('.vid-size-btn', '_vidFontSize', 'medium');
   }
 }
 
-// ── video generation (browser-based) ──
-async function generateVideo() {
-  const btn = document.getElementById('videoGenBtn');
-  btn.disabled = true;
-  btn.textContent = '⏳ 動画を生成中…';
-  const resultDiv = document.getElementById('videoResult');
-  resultDiv.innerHTML = '<p style="font-size:12px;color:var(--muted);margin-top:12px;">ブラウザ内で動画を生成中…10〜20秒ほどかかります</p>';
+// ── SRT export ──
+function downloadSRT() {
+  // Read edited values from UI
+  const hook = document.getElementById('vidHook')?.value || r?.tiktok?.hook || '';
+  const ctaText = document.getElementById('vidCta')?.value || '詳しくはプロフのリンクから👇';
+  const captionInputs = document.querySelectorAll('.vid-caption');
+  const captions = (r?.tiktok_studio?.captions || []).map((c, i) => ({
+    ...c,
+    text: captionInputs[i]?.value || c.text
+  }));
 
-  try {
-    const r = window._lastResult;
-    const prods = window._lastProducts || [];
+  // Build SRT content
+  let srt = '';
+  let idx = 1;
 
-    // Read edited values from UI
-    const hook = document.getElementById('vidHook')?.value || r.tiktok?.hook || '';
-    const priceBadge = document.getElementById('vidBadge')?.value || r.canva?.price_badge || '';
-
-    // Profit data for profit bar display
-    const validProds = prods.filter(p => p.name && p.buyPrice && p.sellPrice);
-    const totalProfit = validProds.reduce((s, p) => s + (parseInt(p.sellPrice) - parseInt(p.buyPrice)), 0);
-    const totalBuy = validProds.reduce((s, p) => s + parseInt(p.buyPrice), 0);
-    const totalRoi = totalBuy > 0 ? Math.round(totalProfit / totalBuy * 100) : 0;
-    const ctaText = document.getElementById('vidCta')?.value || '詳しくはnoteで👇';
-    const captionInputs = document.querySelectorAll('.vid-caption');
-    const captions = (r.tiktok_studio?.captions || []).map((c, i) => ({
-      ...c,
-      text: captionInputs[i]?.value || c.text
-    }));
-
-    // Font size
-    const sizeMap = { small: { hook: 40, sub: 28, badge: 22 }, medium: { hook: 52, sub: 36, badge: 28 }, large: { hook: 64, sub: 44, badge: 34 } };
-    const fs = sizeMap[window._vidFontSize || 'medium'];
-
-    // Load ALL product images
-    const prodImages = []; // [{images: [Image, Image], profit, buy, sell, roi, name}]
-    for (const p of validProds) {
-      const imgs = [];
-      for (const f of (p.files || [])) {
-        if (f.type.startsWith('image/')) imgs.push(await loadImage(f));
-      }
-      const buy = parseInt(p.buyPrice);
-      const sell = parseInt(p.sellPrice);
-      const profit = sell - buy;
-      prodImages.push({ images: imgs, profit, buy, sell, roi: Math.round(profit / buy * 100), name: p.name, category: p.category });
-    }
-    const numProds = prodImages.length || 1;
-
-    // Canvas setup (9:16 vertical)
-    const W = 720, H = 1280;
-    const canvas = document.createElement('canvas');
-    canvas.width = W;
-    canvas.height = H;
-    const ctx = canvas.getContext('2d');
-
-    // MediaRecorder setup
-    const stream = canvas.captureStream(25);
-    const chunks = [];
-    // Safari: mp4, Chrome/others: webm
-    const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
-      : MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8' : 'video/webm';
-    const fileExt = mimeType.includes('mp4') ? 'mp4' : 'webm';
-    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2500000 });
-    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-
-    const videoReady = new Promise(resolve => { recorder.onstop = () => resolve(); });
-    recorder.start();
-
-    // Total duration & frame rendering
-    const totalDuration = 30;
-    const fps = 25;
-    const totalFrames = totalDuration * fps;
-
-    // Helper: draw outlined text with glow + pop animation
-    const drawText = (text, x, y, color, fontSize, maxW, lineH, popProgress) => {
-      const scale = popProgress !== undefined ? Math.min(popProgress * 1.2, 1) * (popProgress < 0.3 ? 0.8 + popProgress * 0.67 : 1) : 1;
-      ctx.save();
-      if (scale !== 1) { ctx.translate(x, y); ctx.scale(scale, scale); ctx.translate(-x, -y); }
-      ctx.font = `900 ${fontSize}px "Hiragino Sans", "Yu Gothic", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.shadowColor = color; ctx.shadowBlur = 16;
-      ctx.strokeStyle = 'rgba(0,0,0,0.9)'; ctx.lineWidth = 6; ctx.lineJoin = 'round';
-      wrapTextStroke(ctx, text, x, y, maxW, lineH);
-      ctx.fillStyle = color; ctx.shadowBlur = 0;
-      wrapText(ctx, text, x, y, maxW, lineH);
-      ctx.restore();
-    };
-
-    // Timeline: [0-3] hook, [3-X] product sections, [X-X+3] total, [last 3] CTA
-    const hookEnd = 3;
-    const ctaDuration = 3;
-    const totalBarDuration = 3;
-    const prodSectionTime = totalDuration - hookEnd - totalBarDuration - ctaDuration; // time for all products
-    const perProdTime = prodSectionTime / numProds;
-    // Each product shows images for perProdTime seconds, switching between front/back
-    const blurLevel = parseInt(window._vidBlur || '20');
-    const blurDiv = Math.max(Math.ceil(blurLevel * 1.5), 4);
-
-    // Helper: draw blurred background image
-    const drawBgImage = (img) => {
-      const scale = Math.max(W / img.width, H / img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
-      ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
-      const blurC = document.createElement('canvas');
-      blurC.width = Math.ceil(W / blurDiv);
-      blurC.height = Math.ceil(H / blurDiv);
-      blurC.getContext('2d').drawImage(canvas, 0, 0, blurC.width, blurC.height);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(blurC, 0, 0, W, H);
-    };
-
-    const drawGradientBg = () => {
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, '#1a1a2e');
-      grad.addColorStop(0.5, '#16213e');
-      grad.addColorStop(1, '#0f3460');
-      ctx.fillStyle = grad;
-      ctx.fillRect(-50, -50, W + 100, H + 100);
-    };
-
-    // Helper: draw profit bar
-    const drawProfitBar = (profit, buy, sell, roi, popT) => {
-      const barPop = Math.min(popT / 0.3, 1);
-      const barScale = barPop < 1 ? 0.7 + barPop * 0.3 : 1;
-      ctx.save();
-      ctx.globalAlpha = barPop;
-      const barX = 30, barY = 40, barW = W - 60, barH = 100;
-      ctx.translate(barX + barW / 2, barY + barH / 2);
-      ctx.scale(barScale, barScale);
-      ctx.translate(-(barX + barW / 2), -(barY + barH / 2));
-      ctx.fillStyle = 'rgba(23,23,31,0.85)';
-      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 16;
-      roundRect(ctx, barX, barY, barW, barH, 16); ctx.fill(); ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(42,42,60,0.8)'; ctx.lineWidth = 1.5;
-      roundRect(ctx, barX, barY, barW, barH, 16); ctx.stroke();
-      ctx.font = `900 38px "Hiragino Sans","Yu Gothic",sans-serif`;
-      ctx.fillStyle = '#00d68f'; ctx.textAlign = 'left';
-      ctx.fillText(`+¥${profit.toLocaleString()}`, barX + 18, barY + 45);
-      ctx.font = `700 14px "Hiragino Sans","Yu Gothic",sans-serif`;
-      ctx.fillStyle = '#7a7a9a';
-      ctx.fillText(`仕入れ ¥${buy.toLocaleString()} → 売値 ¥${sell.toLocaleString()}`, barX + 18, barY + 72);
-      const roiText = `ROI ${roi}%`;
-      ctx.font = `900 16px "Hiragino Sans","Yu Gothic",sans-serif`;
-      const roiW = ctx.measureText(roiText).width + 24;
-      const roiX = barX + barW - roiW - 16, roiY2 = barY + 30;
-      ctx.fillStyle = 'rgba(0,214,143,0.15)'; ctx.strokeStyle = 'rgba(0,214,143,0.3)'; ctx.lineWidth = 1;
-      roundRect(ctx, roiX, roiY2, roiW, 36, 18); ctx.fill();
-      roundRect(ctx, roiX, roiY2, roiW, 36, 18); ctx.stroke();
-      ctx.fillStyle = '#00d68f'; ctx.textAlign = 'center';
-      ctx.fillText(roiText, roiX + roiW / 2, roiY2 + 24);
-      ctx.globalAlpha = 1; ctx.restore();
-    };
-
-    for (let frame = 0; frame < totalFrames; frame++) {
-      const t = frame / fps;
-
-      // Determine which section we're in
-      const prodStart = hookEnd;
-      const prodEndAll = prodStart + prodSectionTime;
-      const totalBarStart = prodEndAll;
-      const totalBarEnd = totalBarStart + totalBarDuration;
-      const ctaStart = totalBarEnd;
-
-      // Current product index and time within that product's section
-      let currentProdIdx = -1;
-      let prodLocalT = 0;
-      if (t >= prodStart && t < prodEndAll) {
-        currentProdIdx = Math.min(Math.floor((t - prodStart) / perProdTime), numProds - 1);
-        prodLocalT = (t - prodStart) - currentProdIdx * perProdTime;
-      }
-
-      // Background with zoom
-      ctx.save();
-      const zoom = 1 + (t / totalDuration) * 0.15;
-      ctx.translate(W / 2, H / 2); ctx.scale(zoom, zoom); ctx.translate(-W / 2, -H / 2);
-
-      if (currentProdIdx >= 0 && prodImages[currentProdIdx]?.images.length > 0) {
-        // Show product images — alternate front/back every half of perProdTime
-        const imgs = prodImages[currentProdIdx].images;
-        const halfTime = perProdTime / 2;
-        const imgIdx = imgs.length > 1 && prodLocalT >= halfTime ? 1 : 0;
-        drawBgImage(imgs[imgIdx]);
-      } else if (t >= totalBarStart && t < totalBarEnd && prodImages[0]?.images[0]) {
-        drawBgImage(prodImages[0].images[0]);
-      } else if (t < hookEnd && prodImages[0]?.images[0]) {
-        drawBgImage(prodImages[0].images[0]);
-      } else {
-        drawGradientBg();
-      }
-      ctx.restore();
-      ctx.fillStyle = 'rgba(0,0,0,0.45)';
-      ctx.fillRect(0, 0, W, H);
-
-      // Hook (0-3s)
-      if (t < hookEnd) {
-        const alpha = t < 0.5 ? t / 0.5 : (t > hookEnd - 0.5 ? (hookEnd - t) / 0.5 : 1);
-        const pop = Math.min(t / 0.2, 1);
-        ctx.globalAlpha = alpha;
-        drawText(hook, W / 2, H / 2, '#ff6b35', fs.hook, W - 60, fs.hook + 12, pop);
-        ctx.globalAlpha = 1;
-      }
-
-      // Per-product profit bar
-      if (currentProdIdx >= 0) {
-        const pi = prodImages[currentProdIdx];
-        drawProfitBar(pi.profit, pi.buy, pi.sell, pi.roi, prodLocalT);
-      }
-
-      // Total profit bar (after all products)
-      if (t >= totalBarStart && t < totalBarEnd) {
-        drawProfitBar(totalProfit, totalBuy, totalBuy + totalProfit, totalRoi, t - totalBarStart);
-        // "合計" label
-        const lAlpha = Math.min((t - totalBarStart) / 0.3, 1);
-        ctx.globalAlpha = lAlpha;
-        drawText(`${numProds}商品の合計利益`, W / 2, 170, '#ffc844', 28, W - 60, 36, Math.min((t - totalBarStart) / 0.2, 1));
-        ctx.globalAlpha = 1;
-      }
-
-      // Subtitles
-      for (const cap of captions) {
-        const start = parseTime(cap.start);
-        const end = parseTime(cap.end);
-        if (t >= start && t < end) {
-          const elapsed = t - start;
-          const fadeOut = Math.min((end - t) / 0.3, 1);
-          const pop = Math.min(elapsed / 0.15, 1);
-          ctx.globalAlpha = fadeOut;
-          drawText(cap.text, W / 2, H - 180, '#ffffff', fs.sub, W - 40, fs.sub + 10, pop);
-          ctx.globalAlpha = 1;
-          break;
-        }
-      }
-
-      // CTA
-      if (t >= ctaStart) {
-        const elapsed = t - ctaStart;
-        const alpha = Math.min(elapsed / 0.5, 1);
-        const pop = Math.min(elapsed / 0.3, 1);
-        ctx.globalAlpha = alpha;
-        drawText(ctaText, W / 2, H / 2 + 100, '#ffc844', fs.sub, W - 60, fs.sub + 10, pop);
-        ctx.globalAlpha = 1;
-      }
-
-      // Progress update
-      if (frame % 50 === 0) {
-        btn.textContent = `⏳ 生成中… ${Math.round(frame / totalFrames * 100)}%`;
-        await new Promise(r => setTimeout(r, 0));
-      }
-
-      // Wait for next frame timing
-      await new Promise(r => setTimeout(r, 1000 / fps));
-    }
-
-    recorder.stop();
-    await videoReady;
-
-    const blob = new Blob(chunks, { type: mimeType });
-    const videoUrl = URL.createObjectURL(blob);
-
-    resultDiv.innerHTML = `
-      <div class="video-preview" style="margin-top:12px;">
-        <video src="${videoUrl}" controls playsinline style="width:100%;max-height:400px;border-radius:12px;"></video>
-      </div>
-      <a href="${videoUrl}" download="sedori-video.${fileExt}" class="video-download-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">
-        📥 動画をダウンロード
-      </a>
-    `;
-    btn.textContent = '🔄 再生成する';
-    btn.disabled = false;
-  } catch (e) {
-    resultDiv.innerHTML = `<p style="font-size:12px;color:#ff6060;margin-top:12px;">⚠️ ${e.message}</p>`;
-    btn.textContent = '🎬 動画を生成する';
-    btn.disabled = false;
+  // 1. Hook (0:00 - 0:03)
+  if (hook) {
+    srt += `${idx}\n00:00:00,000 --> 00:00:03,000\n${hook}\n\n`;
+    idx++;
   }
+
+  // 2. Captions
+  for (const cap of captions) {
+    const startSec = parseSrtTime(cap.start);
+    const endSec = parseSrtTime(cap.end);
+    srt += `${idx}\n${formatSrtTime(startSec)} --> ${formatSrtTime(endSec)}\n${cap.text}\n\n`;
+    idx++;
+  }
+
+  // 3. CTA (last 3 seconds)
+  if (ctaText) {
+    srt += `${idx}\n00:00:27,000 --> 00:00:30,000\n${ctaText}\n\n`;
+  }
+
+  // Download SRT file
+  const blob = new Blob([srt], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sedori-subtitles.srt';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-function loadImage(file) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-function parseTime(t) {
+function parseSrtTime(t) {
   const parts = (t || '0:00').split(':');
   if (parts.length === 2) return parseInt(parts[0]) * 60 + parseInt(parts[1]);
   return parseInt(parts[0]);
 }
 
-function wrapTextStroke(ctx, text, x, y, maxWidth, lineHeight) {
-  const chars = text.split('');
-  let line = '';
-  let ty = y;
-  for (const ch of chars) {
-    const test = line + ch;
-    if (ctx.measureText(test).width > maxWidth && line) {
-      ctx.strokeText(line, x, ty);
-      line = ch;
-      ty += lineHeight;
-    } else {
-      line = test;
-    }
-  }
-  ctx.strokeText(line, x, ty);
-}
-
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-  const chars = text.split('');
-  let line = '';
-  let ty = y;
-  for (const ch of chars) {
-    const test = line + ch;
-    if (ctx.measureText(test).width > maxWidth && line) {
-      ctx.fillText(line, x, ty);
-      line = ch;
-      ty += lineHeight;
-    } else {
-      line = test;
-    }
-  }
-  ctx.fillText(line, x, ty);
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
+function formatSrtTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `00:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},000`;
 }
 
 // ── image compress (for vision scan) ──
