@@ -754,11 +754,11 @@ html, body {
 <div class="api-modal hidden" id="apiModal">
   <div class="api-modal-card">
     <h2>🔑 APIキー設定</h2>
-    <p>Anthropic APIキーを入力してください。<br>端末に保存され、外部には送信されません。</p>
-    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+    <p>Google Gemini APIキーを入力してください。<br>端末に保存され、外部には送信されません。</p>
+    <input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
     <button class="api-save-btn" id="apiSaveBtn" onclick="saveApiKey()">保存する</button>
     <p style="margin-top:14px;margin-bottom:0;font-size:11px;">
-      Vercelデプロイ時は環境変数に設定すれば<br>この入力は不要です
+      <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent);">Google AI Studio</a>で無料で取得できます
     </p>
   </div>
 </div>
@@ -974,37 +974,44 @@ ${noteInstruction}
 日本語・せどり初〜中級者向け・リアルで共感しやすいトーンで。`;
 
   try {
-    // Vercelデプロイ時は /api/generate を使用（環境変数でAPIキー管理）
-    // ローカルテスト時はlocalStorageのAPIキーで直接呼び出し
     const localKey = getApiKey();
     const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
     const useDirectApi = isLocal && localKey;
 
-    const endpoint = useDirectApi ? 'https://api.anthropic.com/v1/messages' : '/api/generate';
-    const headers = { 'Content-Type': 'application/json' };
+    let raw;
     if (useDirectApi) {
-      headers['x-api-key'] = localKey;
-      headers['anthropic-version'] = '2023-06-01';
-    } else if (localKey) {
-      headers['x-api-key'] = localKey;
+      // ローカル: Gemini APIを直接呼び出し
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${localKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.8,
+              maxOutputTokens: 4096,
+              responseMimeType: 'application/json'
+            }
+          })
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(`APIエラー ${res.status}: ${JSON.stringify(data)}`);
+      raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').replace(/```json|```/g, '').trim();
+    } else {
+      // Vercel: プロキシ経由
+      const headers = { 'Content-Type': 'application/json' };
+      if (localKey) headers['x-api-key'] = localKey;
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(`APIエラー ${res.status}: ${JSON.stringify(data)}`);
+      raw = (data.text || '').replace(/```json|```/g, '').trim();
     }
-
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(`APIエラー ${res.status}: ${JSON.stringify(data)}`);
-    }
-
-    const raw = data.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
 
     let result;
     try {
