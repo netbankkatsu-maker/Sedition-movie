@@ -37,70 +37,70 @@ export default async function handler(req, res) {
     const imageUrl = clientImageUrl || null;
 
     // Build subtitle clips using title assets (reliable Japanese text rendering)
+    // Use Google Fonts Noto Sans JP via direct woff2 URL for reliable Japanese rendering
+    const fontUrl = 'https://fonts.gstatic.com/s/notosansjp/v53/nKKF-GM_FYFRJvXzVXaAPe97P1KHynJFP716qQkC.woff2';
+    const htmlWrap = (text, fontSize, color, extra = '') =>
+      `<html><head><meta charset="utf-8"><style>@font-face{font-family:'NotoJP';src:url('${fontUrl}') format('woff2');font-display:block;}body{margin:0;display:flex;align-items:center;justify-content:center;height:100vh;${extra}}p{font-family:'NotoJP',sans-serif;font-size:${fontSize}px;font-weight:900;color:${color};text-align:center;text-shadow:2px 2px 8px rgba(0,0,0,0.8),0 0 20px rgba(0,0,0,0.5);padding:20px;line-height:1.4;margin:0;}</style></head><body><p>${escHtml(text)}</p></body></html>`;
+
+    // Subtitles: bottom area
     const subtitleClips = (captions || []).map(c => {
       const start = timeToSeconds(c.start);
       const end = timeToSeconds(c.end);
       const length = Math.max(end - start, 1);
       return {
         asset: {
-          type: 'title',
-          text: c.text,
-          style: 'subtitle',
-          size: 'small',
-          color: '#ffffff'
+          type: 'html',
+          html: htmlWrap(c.text, 42, '#ffffff'),
+          width: 1080,
+          height: 200
         },
         start,
         length,
         position: 'bottom',
-        offset: { y: 0.08 },
+        offset: { y: 0.15 },
         transition: { in: 'fade', out: 'fade' }
       };
     });
 
-    // Hook text
+    // Hook: center, first 3 seconds only
     const hookClip = hook ? {
       asset: {
-        type: 'title',
-        text: hook,
-        style: 'chunk',
-        color: '#ff6b35',
-        size: 'medium'
+        type: 'html',
+        html: htmlWrap(hook, 60, '#ff6b35'),
+        width: 1080,
+        height: 300
       },
       start: 0,
       length: 3,
       position: 'center',
+      offset: { y: 0.1 },
       transition: { in: 'fade', out: 'fade' }
     } : null;
 
-    // Price badge
+    // Price badge: top, appears after hook
     const badgeClip = priceBadge ? {
       asset: {
-        type: 'title',
-        text: priceBadge,
-        style: 'chunk',
-        color: '#ffffff',
-        size: 'x-small',
-        background: '#ff6b35'
+        type: 'html',
+        html: htmlWrap(priceBadge, 30, '#ffffff', 'align-items:flex-start;padding-top:30px;'),
+        width: 1080,
+        height: 120
       },
-      start: 0,
-      length: 30,
-      position: 'top',
-      offset: { y: -0.02 }
+      start: 3,
+      length: 24,
+      position: 'top'
     } : null;
 
-    // CTA
+    // CTA: center, last 3 seconds only
     const ctaClip = {
       asset: {
-        type: 'title',
-        text: 'noteで利益商品を発信中！',
-        style: 'chunk',
-        color: '#ffc844',
-        size: 'small'
+        type: 'html',
+        html: htmlWrap('noteで利益商品を発信中！', 40, '#ffc844'),
+        width: 1080,
+        height: 200
       },
       start: 27,
       length: 3,
       position: 'center',
-      offset: { y: 0.15 },
       transition: { in: 'fade' }
     };
 
@@ -166,4 +166,8 @@ function timeToSeconds(t) {
   const parts = (t || '0:00').split(':');
   if (parts.length === 2) return parseInt(parts[0]) * 60 + parseInt(parts[1]);
   return parseInt(parts[0]);
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
